@@ -457,8 +457,9 @@ endif
 	        TARGET_CPU_ABI_LIST_64_BIT="$(TARGET_CPU_ABI_LIST_64_BIT)" \
 	        TARGET_CPU_ABI="$(TARGET_CPU_ABI)" \
 	        TARGET_CPU_ABI2="$(TARGET_CPU_ABI2)" \
-          TARGET_UNIFIED_DEVICE="$(TARGET_UNIFIED_DEVICE)" \
-          TARGET_SETS_FSTAB="$(TARGET_SETS_FSTAB)" \
+	        TARGET_UNIFIED_DEVICE="$(TARGET_UNIFIED_DEVICE)" \
+	        TARGET_SETS_FSTAB="$(TARGET_SETS_FSTAB)" \
+	        $(PRODUCT_BUILD_PROP_OVERRIDES) \
 	        bash $(BUILDINFO_SH) >> $@
 	$(hide) $(foreach file,$(system_prop_file), \
 	    if [ -f "$(file)" ]; then \
