@@ -132,6 +132,10 @@ Non-A/B OTA specific options
       Verify the checksums of the updated system and vendor (if any) partitions.
       Non-A/B incremental OTAs only.
 
+  --backup <boolean>
+      Enable or disable the execution of backuptool.sh.
+      Disabled by default.
+
   --override_device <device>
       Override device-specific asserts. Can be a comma-separated list.
 
@@ -223,6 +227,7 @@ OPTIONS.extra_script = None
 OPTIONS.worker_threads = multiprocessing.cpu_count() // 2
 if OPTIONS.worker_threads == 0:
   OPTIONS.worker_threads = 1
+OPTIONS.backuptool = False
 OPTIONS.override_device = 'auto'
 OPTIONS.override_boot_partition = ''
 OPTIONS.mount_by_label = False
@@ -979,6 +984,11 @@ else if get_stage("%(bcb_dev)s") == "3/3" then
   script.SetPermissionsRecursive("/tmp/install", 0, 0, 0755, 0644, None, None)
   script.SetPermissionsRecursive("/tmp/install/bin", 0, 0, 0755, 0755, None, None)
 
+  if OPTIONS.backuptool:
+    script.Mount("/system")
+    script.RunBackup("backup")
+    script.Unmount("/system")
+
   script.ShowProgress(0.5, 0)
 
   if OPTIONS.wipe_user_data:
@@ -1064,8 +1074,15 @@ else if get_stage("%(bcb_dev)s") == "3/3" then
 
   AddCompatibilityArchiveIfTrebleEnabled(input_zip, output_zip, target_info)
 
+  if OPTIONS.backuptool:
+    script.ShowProgress(0.02, 10)
+    script.Mount("/system")
+    script.RunBackup("restore")
+    script.Unmount("/system")
+
   boot_img = common.GetBootableImage(
       "boot.img", "boot.img", OPTIONS.input_tmp, "BOOT")
+
   common.CheckSize(boot_img.data, "boot.img", target_info)
   common.ZipWriteStr(output_zip, "boot.img", boot_img.data)
 
@@ -2263,6 +2280,8 @@ def main(argv):
       else:
         raise ValueError("Cannot parse value %r for option %r - only "
                          "integers are allowed." % (a, o))
+    elif o in ("--backup"):
+      OPTIONS.backuptool = bool(a.lower() == 'true')
     elif o in ("--override_device"):
       OPTIONS.override_device = a
     elif o in ("--override_boot_partition"):
@@ -2321,6 +2340,7 @@ def main(argv):
                                  "override_timestamp",
                                  "extra_script=",
                                  "worker_threads=",
+                                 "backup=",
                                  "override_device=",
                                  "override_boot_partition=",
                                  "two_step",
