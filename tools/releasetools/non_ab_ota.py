@@ -231,6 +231,11 @@ else if get_stage("%(bcb_dev)s") == "3/3" then
   # the update of the system partition takes the remaining progress.
   system_progress = 0.9 - (len(block_diff_dict) - 1) * 0.1
 
+  if OPTIONS.backuptool:
+    script.Mount("/system")
+    script.RunBackup("backup")
+    script.Unmount("/system")
+
   script.Print("                 ,....,                 ");
   script.Print("           .,lx0XNWWWNKOd:.             ");
   script.Print("        .:OWMMMMMMMMMMMMMMMXo.          ");
@@ -281,6 +286,12 @@ else if get_stage("%(bcb_dev)s") == "3/3" then
                              write_verify_script=OPTIONS.verify)
 
   CheckVintfIfTrebleEnabled(OPTIONS.input_tmp, target_info)
+
+  if OPTIONS.backuptool:
+    script.ShowProgress(0.02, 10)
+    script.Mount("/system")
+    script.RunBackup("restore")
+    script.Unmount("/system")
 
   boot_img = common.GetBootableImage(
       "boot.img", "boot.img", OPTIONS.input_tmp, "BOOT")

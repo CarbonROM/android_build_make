@@ -263,6 +263,7 @@ OPTIONS.extra_script = None
 OPTIONS.worker_threads = multiprocessing.cpu_count() // 2
 if OPTIONS.worker_threads == 0:
   OPTIONS.worker_threads = 1
+OPTIONS.backuptool = False
 OPTIONS.override_boot_partition = ''
 OPTIONS.mount_by_label = False
 OPTIONS.two_step = False
@@ -1411,6 +1412,9 @@ def main(argv):
 
   if "ota_mount_by_label" in OPTIONS.info_dict:
     OPTIONS.mount_by_label = bool(OPTIONS.info_dict.get("ota_mount_by_label").lower() == 'true')
+
+  if "ota_backuptool" in OPTIONS.info_dict:
+    OPTIONS.backuptool = bool(OPTIONS.info_dict.get("ota_backuptool").lower() == 'true')
 
   # Assume retrofitting dynamic partitions when base build does not set
   # use_dynamic_partitions but target build does.
