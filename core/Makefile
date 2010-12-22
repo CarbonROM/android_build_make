@@ -5415,6 +5415,7 @@ ifeq ($(TARGET_FLATTEN_APEX),false)
 endif
   $(hide) echo "ota_mount_by_label=$(OTA_SCRIPT_MOUNT_BY_LABEL)" >> $@
   $(hide) echo "ota_override_device=$(OTA_SCRIPT_OVERRIDE_DEVICE)" >> $@
+  $(hide) echo "ota_backuptool=$(OTA_SCRIPT_BACKUPTOOL)" >> $@
 
 $(call declare-0p-target,$(INSTALLED_MISC_INFO_TARGET))
 
@@ -6255,6 +6256,12 @@ ifeq ($(TARGET_OTA_ASSERT_DEVICE),)
     OTA_SCRIPT_OVERRIDE_DEVICE := auto
 else
     OTA_SCRIPT_OVERRIDE_DEVICE := $(TARGET_OTA_ASSERT_DEVICE)
+endif
+
+ifneq ($(CARBON_BUILD),)
+    OTA_SCRIPT_BACKUPTOOL := true
+else
+    OTA_SCRIPT_BACKUPTOOL := false
 endif
 
 $(INTERNAL_OTA_PACKAGE_TARGET): $(BUILT_TARGET_FILES_PACKAGE) $(OTA_FROM_TARGET_SCRIPT) $(INTERNAL_OTATOOLS_FILES)
