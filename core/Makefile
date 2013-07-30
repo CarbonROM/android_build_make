@@ -5052,6 +5052,9 @@ ifneq (true,$(BOARD_EXCLUDE_KERNEL_FROM_RECOVERY_IMAGE))
 ifdef INTERNAL_KERNEL_CMDLINE
 	echo "$(INTERNAL_KERNEL_CMDLINE)" > $(zip_root)/$(PRIVATE_RECOVERY_OUT)/cmdline
 endif # INTERNAL_KERNEL_CMDLINE != ""
+ifdef BOARD_KERNEL_TAGS_OFFSET
+	$(hide) echo "$(BOARD_KERNEL_TAGS_OFFSET)" > $(zip_root)/RECOVERY/tags_offset
+endif
 endif # BOARD_EXCLUDE_KERNEL_FROM_RECOVERY_IMAGE != true
 ifdef BOARD_KERNEL_BASE
 	echo "$(BOARD_KERNEL_BASE)" > $(zip_root)/$(PRIVATE_RECOVERY_OUT)/base
@@ -5093,6 +5096,9 @@ ifdef INSTALLED_2NDBOOTLOADER_TARGET
 endif
 ifdef INSTALLED_DTBIMAGE_TARGET
 	cp $(INSTALLED_DTBIMAGE_TARGET) $(zip_root)/BOOT/dtb
+endif
+ifdef BOARD_KERNEL_TAGS_OFFSET
+	$(hide) echo "$(BOARD_KERNEL_TAGS_OFFSET)" > $(zip_root)/BOOT/tags_offset
 endif
 ifdef BOARD_KERNEL_BASE
 	echo "$(BOARD_KERNEL_BASE)" > $(zip_root)/BOOT/base
