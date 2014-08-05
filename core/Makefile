@@ -1021,7 +1021,7 @@ define build_boot_supports_vboot
   $(call assert-max-image-size,$(1),$(call get-bootimage-partition-size,$(1),boot))
 endef
 
-$(INSTALLED_BOOTIMAGE_TARGET): $(MKBOOTIMG) $(INTERNAL_BOOTIMAGE_FILES) $(VBOOT_SIGNER) $(FUTILITY)
+$(INSTALLED_BOOTIMAGE_TARGET): $(MKBOOTIMG) $(INTERNAL_BOOTIMAGE_FILES) $(VBOOT_SIGNER) $(FUTILITY) $(BOOTIMAGE_EXTRA_DEPS)
 	$(call pretty,"Target boot image: $@")
 	$(call build_boot_supports_vboot,$@)
 
