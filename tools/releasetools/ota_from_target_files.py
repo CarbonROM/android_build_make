@@ -589,9 +589,11 @@ else if get_stage("%(bcb_dev)s") == "3/3" then
     vendor_diff.WriteScript(script, output_zip)
 
   if OPTIONS.backuptool:
-    script.Mount("/system")
+    if OPTIONS.block_based:
+      script.Mount("/system")
     script.RunBackup("restore")
-    script.Unmount("/system")
+    if OPTIONS.block_based:
+      script.Unmount("/system")
 
   common.CheckSize(boot_img.data, "boot.img", OPTIONS.info_dict)
   common.ZipWriteStr(output_zip, "boot.img", boot_img.data)
