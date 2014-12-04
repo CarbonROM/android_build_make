@@ -509,7 +509,7 @@ ifeq (,$(TARGET_BUILD_APPS)$(filter true,$(TARGET_BUILD_PDK)))
   AAPT2 := $(HOST_OUT_EXECUTABLES)/aapt2
   MAINDEXCLASSES := $(HOST_OUT_EXECUTABLES)/mainDexClasses
   SIGNAPK_JAR := $(HOST_OUT_JAVA_LIBRARIES)/signapk$(COMMON_JAVA_PACKAGE_SUFFIX)
-  SIGNAPK_JNI_LIBRARY_PATH := $(HOST_OUT_SHARED_LIBRARIES)
+  export SIGNAPK_JNI_LIBRARY_PATH := $(HOST_OUT_SHARED_LIBRARIES)
   ZIPALIGN := $(HOST_OUT_EXECUTABLES)/zipalign
 
   ifndef DX_ALT_JAR
@@ -528,7 +528,7 @@ else # TARGET_BUILD_APPS || TARGET_BUILD_PDK
   MAINDEXCLASSES := $(prebuilt_sdk_tools)/mainDexClasses
   ZIPALIGN := $(prebuilt_sdk_tools_bin)/zipalign
   SIGNAPK_JAR := $(prebuilt_sdk_tools)/lib/signapk$(COMMON_JAVA_PACKAGE_SUFFIX)
-  SIGNAPK_JNI_LIBRARY_PATH := $(prebuilt_sdk_tools)/$(HOST_OS)/lib64
+  export SIGNAPK_JNI_LIBRARY_PATH := $(prebuilt_sdk_tools)/$(HOST_OS)/lib64
 endif # TARGET_BUILD_APPS || TARGET_BUILD_PDK
 
 ifeq (,$(TARGET_BUILD_APPS))
