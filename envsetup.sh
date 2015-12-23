@@ -32,6 +32,7 @@ Invoke ". build/envsetup.sh" from your shell to add the following functions to y
 - refreshmod: Refresh list of modules for allmod/gomod.
 - cmremote: Add git remote for matching CM repository.
 - crremote: Add gerrit remote for matching Carbon repository.
+- mka:      Builds using SCHED_BATCH on all processors
 
 Environment options:
 - SANITIZE_HOST: Set to 'true' to use ASAN for all host modules. Note that
@@ -199,6 +200,21 @@ function crremote()
     echo You can now push to "crremote".
  }
 
+function mka() {
+   local T=$(gettop)
+   if [ "$T" ]; then
+       case `uname -s` in
+           Darwin)
+               make -C $T -j `sysctl hw.ncpu|cut -d" " -f2` "$@"
+               ;;
+           *)
+               mk_timer schedtool -B -n 1 -e ionice -n 1 make -C $T -j$(cat /proc/cpuinfo | grep "^processor" | wc -l) "$@"
+               ;;
+       esac
+     else
+       echo "Couldn't locate the top of the tree.  Try setting TOP."
+   fi
+}
 
 function setpaths()
 {
