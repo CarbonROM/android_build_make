@@ -398,6 +398,7 @@ function addcompletions()
       system/core/adb/adb.bash
       system/core/fastboot/fastboot.bash
       tools/asuite/asuite.sh
+      vendor/carbon/bash_completion
     )
     # Completion can be disabled selectively to allow users to use non-standard completion.
     # e.g.
