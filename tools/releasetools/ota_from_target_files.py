@@ -321,7 +321,10 @@ class BuildInfo(object):
 
     # These two should be computed only after setting self._oem_props.
     if OPTIONS.override_device == "auto":
-      self._device = self.GetOemProperty("ro.product.device")
+      if OPTIONS.override_prop:
+        self._device = self.GetOemProperty("ro.build.product")
+      else:
+        self._device = self.GetOemProperty("ro.product.device")
     else:
       self._device = OPTIONS.override_device
     self._fingerprint = self.CalculateFingerprint()
@@ -429,6 +432,8 @@ class BuildInfo(object):
     return self.GetBuildProp(key)
 
   def CalculateFingerprint(self):
+    if OPTIONS.override_prop:
+      return self.GetBuildProp("ro.build.date.utc")
     if self.oem_props is None:
       try:
         return self.GetBuildProp("ro.build.fingerprint")
