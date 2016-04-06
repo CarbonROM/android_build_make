@@ -30,6 +30,7 @@ Invoke ". build/envsetup.sh" from your shell to add the following functions to y
 - gomod:      Go to the directory containing a module.
 - pathmod:    Get the directory containing a module.
 - refreshmod: Refresh list of modules for allmod/gomod.
+- aospremote: Add git remote for matching AOSP repository.
 - cmremote: Add git remote for matching CM repository.
 - crremote: Add gerrit remote for matching Carbon repository.
 - mka:      Builds using SCHED_BATCH on all processors
@@ -208,6 +209,22 @@ function crremote()
     fi
     echo You can now push to "crremote".
  }
+
+function aospremote()
+{
+    git remote rm aosp 2> /dev/null
+    if [ ! -d .git ]
+    then
+        echo .git directory not found. Please run this from the root directory of the Android repository you wish to set up.
+    fi
+    PROJECT=`pwd -P | sed s#$ANDROID_BUILD_TOP/##g`
+    if (echo $PROJECT | grep -qv "^device")
+    then
+        PFX="platform/"
+    fi
+    git remote add aosp https://android.googlesource.com/$PFX$PROJECT
+    echo "Remote 'aosp' created"
+}
 
 function mka() {
    m -j "$@"
@@ -1831,3 +1848,5 @@ function source_vendorsetup() {
 validate_current_shell
 source_vendorsetup
 addcompletions
+
+export ANDROID_BUILD_TOP=$(gettop)
