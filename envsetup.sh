@@ -672,20 +672,6 @@ function lunch()
 
     if [ -z "$product" ]
     then
-       # if we can't find the product, try to grab it from our github
-      T=$(gettop)
-      pushd $T > /dev/null
-      build/tools/roomservice.py $variant
-      popd > /dev/null
-      check_variant $variant
-    else
-      T=$(gettop)
-      pushd $T > /dev/null
-      build/tools/roomservice.py $variant true
-      popd > /dev/null
-    fi
-    if [ $? -ne 0 ]
-    then
         echo
         echo "Invalid lunch combo: $selection"
         return 1
@@ -696,6 +682,28 @@ function lunch()
     TARGET_PLATFORM_VERSION=$version \
     build_build_var_cache
     if [ $? -ne 0 ]
+    then
+        # if we can't find the product, try to grab it from our github
+        T=$(gettop)
+        pushd $T > /dev/null
+        build/tools/roomservice.py $product
+        popd > /dev/null
+        check_variant $product
+    else
+        T=$(gettop)
+        pushd $T > /dev/null
+        build/tools/roomservice.py $product true
+        popd > /dev/null
+    fi
+    if [ $? -ne 0 ]
+    then
+        echo
+        echo "** Don't have a product spec for: '$product'"
+        echo "** Do you have the right repo manifest?"
+        product=
+    fi
+
+    if [ -z "$product" -o -z "$variant" ]
     then
         return 1
     fi
