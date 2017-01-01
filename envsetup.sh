@@ -763,13 +763,13 @@ function lunch()
         T=$(gettop)
         pushd $T > /dev/null
         build/tools/roomservice.py $product
-        popd > /dev/null
+        cd - > /dev/null
         check_product $product
     else
         T=$(gettop)
         pushd $T > /dev/null
         build/tools/roomservice.py $product true
-        popd > /dev/null
+        cd - > /dev/null
     fi
     if [ $? -ne 0 ]
     then
