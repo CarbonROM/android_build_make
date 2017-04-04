@@ -208,6 +208,8 @@ else if get_stage("%(bcb_dev)s") == "3/3" then
     # Stage 3/3: Make changes.
     script.Comment("Stage 3/3")
 
+  script.AppendExtra("ifelse(is_mounted(\"/system\"), unmount(\"/system\"));")
+
   # Dump fingerprints
   script.Print("Target: {}".format(target_info.fingerprint))
 
@@ -216,7 +218,37 @@ else if get_stage("%(bcb_dev)s") == "3/3" then
   # All other partitions as well as the data wipe use 10% of the progress, and
   # the update of the system partition takes the remaining progress.
   system_progress = 0.9 - (len(block_diff_dict) - 1) * 0.1
+
+  script.Print("                 ,....,                 ");
+  script.Print("           .,lx0XNWWWNKOd:.             ");
+  script.Print("        .:OWMMMMMMMMMMMMMMMXo.          ");
+  script.Print("      .oWMMMMMMMMMMMMMMMMMMMMM0,        ");
+  script.Print("     cWMMMMMMMMMMMMMMMMMMMMMMMMMO.      ");
+  script.Print("   .OMMMMMMMMMMMMMMMMMMMMMMMMMMWd.      ");
+  script.Print("  .KMMMMMMMMMKkdlllldkKMMMMMMMO.        ");
+  script.Print("  OMMMM`  x;.          .;xWMX;          ");
+  script.Print(" :MMMM  ..`               .;.           ");
+  script.Print(" KMMM  .o;                              ");
+  script.Print(".MMM  .0M;                              ");
+  script.Print("'MM` .KMMl                              ");
+  script.Print(".MN  xMMM0                              ");
+  script.Print(".NM ,MMMMM:                           ..");
+  script.Print(" dM :MMMMMW'                         .k ");
+  script.Print(" .N cMMMMMMW;                       'Xc ");
+  script.Print("  ,x;MMMMMMMMx.                   .oW0. ");
+  script.Print("   ,.NMMMMMMMMWx'                lNMK.  ");
+  script.Print("     ,NMMMMMMMMMMXx:'.     ..:o ,MMO.   ");
+  script.Print("      .kMMMMMMMMMMMMMMNXXXNMMW  NWl.    ");
+  script.Print("        ,OMMMMMMMMMMMMMMMMMMK  Xd.      ");
+  script.Print("          .oKMMMMMMMMMMMMMKc  :.        ");
+  script.Print("             .:okKNWWWNKdl'  '          ");
+  script.Print("                 ''...`',  +'           ");
+  script.Print("                                        ");
+  script.Print("                carbonrom.org           ");
+
   if OPTIONS.wipe_user_data:
+    script.Print("Formatting /data")
+    script.FormatPartition("/data", OPTIONS.mount_by_label)
     system_progress -= 0.1
   progress_dict = {partition: 0.1 for partition in block_diff_dict}
   progress_dict["system"] = system_progress
@@ -243,9 +275,12 @@ else if get_stage("%(bcb_dev)s") == "3/3" then
   common.CheckSize(boot_img.data, "boot.img", target_info)
   common.ZipWriteStr(output_zip, "boot.img", boot_img.data)
 
-  script.WriteRawImage("/boot", "boot.img")
+  script.Print("Flashing boot.img")
+  bootpartition = "/boot" if OPTIONS.override_boot_partition == "" else OPTIONS.override_boot_partition
+  script.WriteRawImage(bootpartition, "boot.img")
 
   script.ShowProgress(0.1, 10)
+  script.Print("Enjoy CarbonROM!");
   device_specific.FullOTA_InstallEnd()
 
   if OPTIONS.extra_script is not None:
@@ -484,6 +519,10 @@ else
     common.ZipWriteStr(output_zip, "boot.img", target_boot.data)
     script.WriteRawImage("/boot", "boot.img")
     logger.info("writing full boot image (forced by two-step mode)")
+
+  if OPTIONS.wipe_user_data:
+    script.Print("Erasing user data...")
+    script.FormatPartition("/data", OPTIONS.mount_by_label)
 
   if not OPTIONS.two_step:
     if updating_boot:
