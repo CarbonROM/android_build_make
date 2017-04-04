@@ -1,5 +1,20 @@
 # Put some miscellaneous rules here
 
+# Build system colors
+#
+# PFX: Prefix "target C++:" in yellow
+# INS: Module "Install:" output color (cyan for ics)
+
+ifneq ($(BUILD_WITH_COLORS),0)
+  CL_PFX="\033[33m"
+  CL_INS="\033[36m"
+  CL_RED="\033[31m"
+  CL_YLW="\033[33m"
+  CL_BLU="\033[34m"
+  CL_CYN="\033[36m"
+  CL_RST="\033[0m"
+endif
+
 # HACK: clear LOCAL_PATH from including last build target before calling
 # intermedites-dir-for
 LOCAL_PATH := $(BUILD_SYSTEM)
@@ -61,7 +76,6 @@ product_copy_files_ignored :=
 $(foreach cf,$(unique_product_copy_files_pairs), \
     $(eval _src := $(call word-colon,1,$(cf))) \
     $(eval _dest := $(call word-colon,2,$(cf))) \
-    $(call check-product-copy-files,$(cf),$(_dest)) \
     $(if $(filter $(unique_product_copy_files_destinations),$(_dest)), \
         $(eval product_copy_files_ignored += $(cf)), \
         $(eval _fulldest := $(call append-path,$(PRODUCT_OUT),$(_dest))) \
@@ -970,6 +984,7 @@ endef
 $(INSTALLED_BOOTIMAGE_TARGET): $(MKBOOTIMG) $(AVBTOOL) $(INTERNAL_BOOTIMAGE_FILES) $(BOARD_AVB_BOOT_KEY_PATH) $(BOARD_GKI_SIGNING_KEY_PATH)
 	$(call pretty,"Target boot image: $@")
 	$(call build_boot_board_avb_enabled,$@)
+	@echo -e ${CL_CYN}"Made boot image: $@"${CL_RST}
 
 .PHONY: bootimage-nodeps
 bootimage-nodeps: $(MKBOOTIMG) $(AVBTOOL) $(BOARD_AVB_BOOT_KEY_PATH) $(BOARD_GKI_SIGNING_KEY_PATH)
@@ -988,11 +1003,13 @@ endef
 $(INSTALLED_BOOTIMAGE_TARGET): $(MKBOOTIMG) $(INTERNAL_BOOTIMAGE_FILES) $(BOOT_SIGNER)
 	$(call pretty,"Target boot image: $@")
 	$(call build_boot_supports_boot_signer,$@)
+	@echo -e ${CL_CYN}"Made boot image: $@"${CL_RST}
 
 .PHONY: bootimage-nodeps
 bootimage-nodeps: $(MKBOOTIMG) $(BOOT_SIGNER)
 	@echo "make $@: ignoring dependencies"
 	$(foreach b,$(INSTALLED_BOOTIMAGE_TARGET),$(call build_boot_supports_boot_signer,$(b)))
+	@echo -e ${CL_CYN}"Made boot image: $@"${CL_RST}
 
 else ifeq (true,$(PRODUCT_SUPPORTS_VBOOT)) # PRODUCT_SUPPORTS_BOOT_SIGNER != true
 
@@ -2057,6 +2074,17 @@ endif # TARGET_RECOVERY_UI_SCREEN_WIDTH
 ifndef TARGET_PRIVATE_RES_DIRS
 TARGET_PRIVATE_RES_DIRS := $(wildcard $(TARGET_DEVICE_DIR)/recovery/res)
 endif
+
+ifneq ($(TARGET_RECOVERY_DEVICE_DIRS),)
+recovery_root_private := $(strip \
+  $(foreach d,$(TARGET_RECOVERY_DEVICE_DIRS), $(wildcard $(d)/recovery/root)))
+else
+recovery_root_private := $(strip $(wildcard $(TARGET_DEVICE_DIR)/recovery/root))
+endif
+ifneq ($(recovery_root_private),)
+recovery_root_deps := $(shell find $(recovery_root_private) -type f)
+endif
+
 recovery_resource_deps := $(shell find $(recovery_resources_common) \
   $(TARGET_PRIVATE_RES_DIRS) -type f)
 recovery_resource_deps += $(generated_recovery_text_files)
@@ -2202,7 +2230,8 @@ $(INTERNAL_RECOVERY_RAMDISK_FILES_TIMESTAMP): $(MKBOOTFS) $(COMPRESSION_COMMAND_
 	    $(INSTALLED_RECOVERY_BUILD_PROP_TARGET) \
 	    $(INSTALLED_RECOVERY_RAMDISK_BUILD_PROP_TARGET) \
 	    $(recovery_resource_deps) \
-	    $(recovery_fstab)
+	    $(recovery_fstab) \
+	    $(recovery_root_deps)
 	# Making recovery image
 	mkdir -p $(TARGET_RECOVERY_OUT)
 	mkdir -p $(TARGET_RECOVERY_ROOT_OUT)/sdcard $(TARGET_RECOVERY_ROOT_OUT)/tmp
@@ -2221,6 +2250,8 @@ $(INTERNAL_RECOVERY_RAMDISK_FILES_TIMESTAMP): $(MKBOOTFS) $(COMPRESSION_COMMAND_
 	$(foreach recovery_text_file,$(generated_recovery_text_files), \
 	  cp -rf $(recovery_text_file) $(TARGET_RECOVERY_ROOT_OUT)/res/images/ &&) true
 	cp -f $(recovery_font) $(TARGET_RECOVERY_ROOT_OUT)/res/images/font.png
+	$(foreach item,$(recovery_root_private), \
+	  cp -rf $(item) $(TARGET_RECOVERY_ROOT_OUT)/)
 	$(foreach item,$(TARGET_PRIVATE_RES_DIRS), \
 	  cp -rf $(item) $(TARGET_RECOVERY_ROOT_OUT)/$(newline))
 	$(foreach item,$(recovery_fstab), \
@@ -2259,6 +2290,7 @@ define build-recoveryimage-target
     $(if $(filter true,$(BOARD_USES_RECOVERY_AS_BOOT)), \
       $(AVBTOOL) add_hash_footer --image $(1) --partition_size $(call get-bootimage-partition-size,$(1),boot) --partition_name boot $(INTERNAL_AVB_BOOT_SIGNING_ARGS) $(BOARD_AVB_BOOT_ADD_HASH_FOOTER_ARGS),\
       $(AVBTOOL) add_hash_footer --image $(1) --partition_size $(BOARD_RECOVERYIMAGE_PARTITION_SIZE) --partition_name recovery $(INTERNAL_AVB_RECOVERY_SIGNING_ARGS) $(BOARD_AVB_RECOVERY_ADD_HASH_FOOTER_ARGS)))
+  @echo -e ${CL_CYN}"Made recovery image: $@"${CL_RST}
 endef
 
 recoveryimage-deps := $(MKBOOTIMG) $(recovery_ramdisk) $(recovery_kernel)
@@ -2717,6 +2749,11 @@ INTERNAL_SYSTEMIMAGE_FILES := $(sort $(filter $(TARGET_OUT)/%, \
 
 # Create symlink /system/vendor to /vendor if necessary.
 ifdef BOARD_USES_VENDORIMAGE
+  INTERNAL_SYSTEMIMAGE_FILES += $(call create-partition-compat-symlink,$(TARGET_OUT)/vendor,/vendor,vendor.img)
+endif
+
+# Create symlink /system/vendor to /vendor if forced by flag.
+ifdef BOARD_NEEDS_VENDORIMAGE_SYMLINK
   INTERNAL_SYSTEMIMAGE_FILES += $(call create-partition-compat-symlink,$(TARGET_OUT)/vendor,/vendor,vendor.img)
 endif
 
@@ -4257,21 +4294,20 @@ endif
 # -----------------------------------------------------------------
 # host tools needed to build dist and OTA packages
 
-ifeq ($(BUILD_OS),darwin)
+# Set build_ota_package, and allow opt-out below.
+build_ota_package := true
+ifeq ($(TARGET_SKIP_OTA_PACKAGE),true)
   build_ota_package := false
-  build_otatools_package := false
-else
-  # Set build_ota_package, and allow opt-out below.
-  build_ota_package := true
-  ifeq ($(TARGET_SKIP_OTA_PACKAGE),true)
-    build_ota_package := false
-  endif
-  ifneq (,$(filter address, $(SANITIZE_TARGET)))
-    build_ota_package := false
-  endif
-  ifeq ($(TARGET_PRODUCT),sdk)
-    build_ota_package := false
-  endif
+endif
+ifneq (,$(filter address, $(SANITIZE_TARGET)))
+  build_ota_package := false
+endif
+ifeq ($(TARGET_PRODUCT),sdk)
+  build_ota_package := false
+endif
+ifeq ($(TARGET_BUILD_PDK),true)
+  build_ota_package := false
+endif
   # A target without a kernel may be one of the following:
   # - A generic target. In this case, the OTA package usually isn't built.
   #   PRODUCT_BUILD_GENERIC_OTA_PACKAGE may be set to true to force OTA package
@@ -4279,25 +4315,24 @@ else
   # - A real device target, with TARGET_NO_KERNEL set to true and
   #   BOARD_PREBUILT_BOOTIMAGE set. In this case, it is valid to generate
   #   an OTA package.
-  ifneq ($(PRODUCT_BUILD_GENERIC_OTA_PACKAGE),true)
-    ifneq ($(filter generic%,$(TARGET_DEVICE)),)
-      build_ota_package := false
-    endif
-    ifeq ($(INSTALLED_BOOTIMAGE_TARGET),)
-      ifeq ($(TARGET_NO_KERNEL),true)
-        build_ota_package := false
-      endif
-    endif # INSTALLED_BOOTIMAGE_TARGET == ""
-    ifeq ($(recovery_fstab),)
-      build_ota_package := false
-    endif
-  endif # PRODUCT_BUILD_GENERIC_OTA_PACKAGE
-
-  # Set build_otatools_package, and allow opt-out below.
-  build_otatools_package := true
-  ifeq ($(TARGET_SKIP_OTATOOLS_PACKAGE),true)
-    build_otatools_package := false
+ifneq ($(PRODUCT_BUILD_GENERIC_OTA_PACKAGE),true)
+  ifneq ($(filter generic%,$(TARGET_DEVICE)),)
+    build_ota_package := false
   endif
+  ifeq ($(INSTALLED_BOOTIMAGE_TARGET),)
+    ifeq ($(TARGET_NO_KERNEL),true)
+      build_ota_package := false
+    endif
+  endif # INSTALLED_BOOTIMAGE_TARGET == ""
+  ifeq ($(recovery_fstab),)
+    build_ota_package := false
+  endif
+endif # PRODUCT_BUILD_GENERIC_OTA_PACKAGE
+
+# Set build_otatools_package, and allow opt-out below.
+build_otatools_package := true
+ifeq ($(TARGET_SKIP_OTATOOLS_PACKAGE),true)
+  build_otatools_package := false
 endif
 
 ifeq ($(build_otatools_package),true)
@@ -4659,6 +4694,7 @@ endif
 ifneq ($(BOARD_PARTIAL_OTA_UPDATE_PARTITIONS_LIST),)
 	$(hide) echo "partial_ota_update_partitions_list=$(BOARD_PARTIAL_OTA_UPDATE_PARTITIONS_LIST)" >> $@
 endif
+	$(hide) echo "ota_mount_by_label=$(OTA_SCRIPT_MOUNT_BY_LABEL)" >> $@
 
 .PHONY: misc_info
 misc_info: $(INSTALLED_MISC_INFO_TARGET)
@@ -5339,10 +5375,11 @@ ifeq ($(build_ota_package),true)
 # $(2): additional args
 define build-ota-package-target
 PATH=$(INTERNAL_USERIMAGES_BINARY_PATHS):$(dir $(ZIP2ZIP)):$$PATH \
-    $(OTA_FROM_TARGET_FILES) \
+    $(OTA_FROM_TARGET_SCRIPT) \
         --verbose \
         --extracted_input_target_files $(patsubst %.zip,%,$(BUILT_TARGET_FILES_PACKAGE)) \
         --path $(HOST_OUT) \
+        $(TARGET_RELEASETOOL_OTA_FROM_TARGET_ADDITIONAL_ARGS) \
         $(if $(OEM_OTA_CONFIG), --oem_settings $(OEM_OTA_CONFIG)) \
         $(2) \
         $(BUILT_TARGET_FILES_PACKAGE) $(1)
@@ -5359,8 +5396,21 @@ INTERNAL_OTA_METADATA := $(PRODUCT_OUT)/ota_metadata
 
 $(INTERNAL_OTA_PACKAGE_TARGET): KEY_CERT_PAIR := $(DEFAULT_KEY_CERT_PAIR)
 $(INTERNAL_OTA_PACKAGE_TARGET): .KATI_IMPLICIT_OUTPUTS := $(INTERNAL_OTA_METADATA)
-$(INTERNAL_OTA_PACKAGE_TARGET): $(BUILT_TARGET_FILES_PACKAGE) $(OTA_FROM_TARGET_FILES) $(INTERNAL_OTATOOLS_FILES)
-	@echo "Package OTA: $@"
+
+ifeq ($(TARGET_RELEASETOOL_OTA_FROM_TARGET_SCRIPT),)
+    OTA_FROM_TARGET_SCRIPT := $(OTA_FROM_TARGET_FILES)
+else
+    OTA_FROM_TARGET_SCRIPT := $(TARGET_RELEASETOOL_OTA_FROM_TARGET_SCRIPT)
+endif
+
+ifneq ($(TARGET_SETS_FSTAB),)
+    OTA_SCRIPT_MOUNT_BY_LABEL := true
+else
+    OTA_SCRIPT_MOUNT_BY_LABEL := false
+endif
+
+$(INTERNAL_OTA_PACKAGE_TARGET): $(BUILT_TARGET_FILES_PACKAGE) $(OTA_FROM_TARGET_SCRIPT) $(INTERNAL_OTATOOLS_FILES)
+	@echo -e ${CL_YLW}"Package OTA: $@"${CL_RST}
 	$(call build-ota-package-target,$@,-k $(KEY_CERT_PAIR) --output_metadata_path $(INTERNAL_OTA_METADATA))
 
 .PHONY: otapackage
@@ -5373,7 +5423,7 @@ INTERNAL_OTA_RETROFIT_DYNAMIC_PARTITIONS_PACKAGE_TARGET := $(PRODUCT_OUT)/$(name
 $(INTERNAL_OTA_RETROFIT_DYNAMIC_PARTITIONS_PACKAGE_TARGET): KEY_CERT_PAIR := $(DEFAULT_KEY_CERT_PAIR)
 $(INTERNAL_OTA_RETROFIT_DYNAMIC_PARTITIONS_PACKAGE_TARGET): \
     $(BUILT_TARGET_FILES_PACKAGE) \
-    $(OTA_FROM_TARGET_FILES) \
+    $(OTA_FROM_TARGET_SCRIPT) \
     $(INTERNAL_OTATOOLS_FILES)
 	@echo "Package OTA (retrofit dynamic partitions): $@"
 	$(call build-ota-package-target,$@,-k $(KEY_CERT_PAIR) --retrofit_dynamic_partitions)
@@ -5389,7 +5439,7 @@ name := $(product_name)-partial-ota-$(FILE_NAME_TAG)
 
 INTERNAL_OTA_PARTIAL_PACKAGE_TARGET := $(PRODUCT_OUT)/$(name).zip
 $(INTERNAL_OTA_PARTIAL_PACKAGE_TARGET): KEY_CERT_PAIR := $(DEFAULT_KEY_CERT_PAIR)
-$(INTERNAL_OTA_PARTIAL_PACKAGE_TARGET): $(BUILT_TARGET_FILES_PACKAGE) $(OTA_FROM_TARGET_FILES) $(INTERNAL_OTATOOLS_FILES)
+$(INTERNAL_OTA_PARTIAL_PACKAGE_TARGET): $(BUILT_TARGET_FILES_PACKAGE) $(OTA_FROM_TARGET_SCRIPT) $(INTERNAL_OTATOOLS_FILES)
 	@echo "Package partial OTA: $@"
 	$(call build-ota-package-target,$@,-k $(KEY_CERT_PAIR) --partial "$(BOARD_PARTIAL_OTA_UPDATE_PARTITIONS_LIST)")
 
@@ -5734,7 +5784,7 @@ name := $(name)-img-$(FILE_NAME_TAG)
 
 INTERNAL_UPDATE_PACKAGE_TARGET := $(PRODUCT_OUT)/$(name).zip
 
-$(INTERNAL_UPDATE_PACKAGE_TARGET): $(BUILT_TARGET_FILES_PACKAGE) $(IMG_FROM_TARGET_FILES)
+$(INTERNAL_UPDATE_PACKAGE_TARGET): $(BUILT_TARGET_FILES_PACKAGE) $(DISTTOOLS) $(IMG_FROM_TARGET_FILES)
 	$(call pretty,"Package: $@")
 	PATH=$(INTERNAL_USERIMAGES_BINARY_PATHS):$(dir $(ZIP2ZIP)):$$PATH \
 	    $(IMG_FROM_TARGET_FILES) \
