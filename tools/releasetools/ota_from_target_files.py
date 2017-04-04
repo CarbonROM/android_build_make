@@ -132,6 +132,21 @@ Non-A/B OTA specific options
       Verify the checksums of the updated system and vendor (if any) partitions.
       Non-A/B incremental OTAs only.
 
+  --backup <boolean>
+      Enable or disable the execution of backuptool.sh.
+      Disabled by default.
+
+  --override_device <device>
+      Override device-specific asserts. Can be a comma-separated list.
+
+  --override_boot_partition <string>
+      Override the partition where the boot image is installed.
+      Used for devices with a staging partition (Asus Transformer).
+
+  --mount_by_label <boolean>
+      Force the OTA package to mount and format System by label
+      Can be enabled by defining TARGET_SETS_FSTAB. Defaults to false.
+
   -2  (--two_step)
       Generate a 'two-step' OTA package, where recovery is updated first, so
       that any changes made to the system partition are done using the new
@@ -212,6 +227,10 @@ OPTIONS.extra_script = None
 OPTIONS.worker_threads = multiprocessing.cpu_count() // 2
 if OPTIONS.worker_threads == 0:
   OPTIONS.worker_threads = 1
+OPTIONS.backuptool = False
+OPTIONS.override_device = 'auto'
+OPTIONS.override_boot_partition = ''
+OPTIONS.mount_by_label = False
 OPTIONS.two_step = False
 OPTIONS.include_secondary = False
 OPTIONS.no_signing = False
@@ -307,7 +326,10 @@ class BuildInfo(object):
       assert oem_dicts, "OEM source required for this build"
 
     # These two should be computed only after setting self._oem_props.
-    self._device = self.GetOemProperty("ro.product.device")
+    if OPTIONS.override_device == "auto":
+      self._device = self.GetOemProperty("ro.product.device")
+    else:
+      self._device = OPTIONS.override_device
     self._fingerprint = self.CalculateFingerprint()
 
   @property
@@ -941,10 +963,51 @@ else if get_stage("%(bcb_dev)s") == "3/3" then
     # Stage 3/3: Make changes.
     script.Comment("Stage 3/3")
 
+  script.AppendExtra("ifelse(is_mounted(\"/system\"), unmount(\"/system\"));")
+
   # Dump fingerprints
   script.Print("Target: {}".format(target_info.fingerprint))
 
   device_specific.FullOTA_InstallBegin()
+
+  if OPTIONS.backuptool:
+    script.Mount("/system", OPTIONS.mount_by_label)
+    script.RunBackup("backup")
+    if not OPTIONS.mount_by_label:
+      script.Unmount("/system")
+
+  script.ShowProgress(0.5, 0)
+
+  if OPTIONS.wipe_user_data:
+    script.Print("Formatting /data")
+    script.FormatPartition("/data", OPTIONS.mount_by_label)
+
+  script.Print("                 ,....,                 ");
+  script.Print("           .,lx0XNWWWNKOd:.             ");
+  script.Print("        .:OWMMMMMMMMMMMMMMMXo.          ");
+  script.Print("      .oWMMMMMMMMMMMMMMMMMMMMM0,        ");
+  script.Print("     cWMMMMMMMMMMMMMMMMMMMMMMMMMO.      ");
+  script.Print("   .OMMMMMMMMMMMMMMMMMMMMMMMMMMWd.      ");
+  script.Print("  .KMMMMMMMMMKkdlllldkKMMMMMMMO.        ");
+  script.Print("  OMMMM`  x;.          .;xWMX;          ");
+  script.Print(" :MMMM  ..`               .;.           ");
+  script.Print(" KMMM  .o;                              ");
+  script.Print(".MMM  .0M;                              ");
+  script.Print("'MM` .KMMl                              ");
+  script.Print(".MN  xMMM0                              ");
+  script.Print(".NM ,MMMMM:                           ..");
+  script.Print(" dM :MMMMMW'                         .k ");
+  script.Print(" .N cMMMMMMW;                       'Xc ");
+  script.Print("  ,x;MMMMMMMMx.                   .oW0. ");
+  script.Print("   ,.NMMMMMMMMWx'                lNMK.  ");
+  script.Print("     ,NMMMMMMMMMMXx:'.     ..:o ,MMO.   ");
+  script.Print("      .kMMMMMMMMMMMMMMNXXXNMMW  NWl.    ");
+  script.Print("        ,OMMMMMMMMMMMMMMMMMMK  Xd.      ");
+  script.Print("          .oKMMMMMMMMMMMMMKc  :.        ");
+  script.Print("             .:okKNWWWNKdl'  '          ");
+  script.Print("                 ''...`',  +'           ");
+  script.Print("                                        ");
+  script.Print("                carbonrom.org           ");
 
   system_progress = 0.75
 
@@ -1003,10 +1066,17 @@ else if get_stage("%(bcb_dev)s") == "3/3" then
   common.CheckSize(boot_img.data, "boot.img", target_info)
   common.ZipWriteStr(output_zip, "boot.img", boot_img.data)
 
-  script.ShowProgress(0.05, 5)
-  script.WriteRawImage("/boot", "boot.img")
+  if OPTIONS.backuptool:
+    script.ShowProgress(0.2, 10)
+    script.RunBackup("restore")
 
   script.ShowProgress(0.2, 10)
+  script.Print("Flashing boot.img")
+  bootpartition = "/boot" if OPTIONS.override_boot_partition == "" else OPTIONS.override_boot_partition
+  script.WriteRawImage(bootpartition, "boot.img")
+
+  script.ShowProgress(0.1, 0)
+  script.Print("Enjoy Carbon ROM!");
   device_specific.FullOTA_InstallEnd()
 
   if OPTIONS.extra_script is not None:
@@ -1787,6 +1857,10 @@ else
     script.WriteRawImage("/boot", "boot.img")
     logger.info("writing full boot image (forced by two-step mode)")
 
+  if OPTIONS.wipe_user_data:
+    script.Print("Erasing user data...")
+    script.FormatPartition("/data", OPTIONS.mount_by_label)
+
   if not OPTIONS.two_step:
     if updating_boot:
       if include_full_boot:
@@ -1844,7 +1918,6 @@ endif;
       NonAbOtaPropertyFiles(),
   )
   FinalizeMetadata(metadata, staging_file, output_file, needed_property_files)
-
 
 def GetTargetFilesZipForSecondaryImages(input_file, skip_postinstall=False):
   """Returns a target-files.zip file for generating secondary payload.
@@ -2191,6 +2264,14 @@ def main(argv):
       else:
         raise ValueError("Cannot parse value %r for option %r - only "
                          "integers are allowed." % (a, o))
+    elif o in ("--backup"):
+      OPTIONS.backuptool = bool(a.lower() == 'true')
+    elif o in ("--override_device"):
+      OPTIONS.override_device = a
+    elif o in ("--override_boot_partition"):
+      OPTIONS.override_boot_partition = a
+    elif o in ("--mount_by_label"):
+      OPTIONS.mount_by_label = bool(a.lower() == 'true')
     elif o in ("-2", "--two_step"):
       OPTIONS.two_step = True
     elif o == "--include_secondary":
@@ -2243,8 +2324,12 @@ def main(argv):
                                  "override_timestamp",
                                  "extra_script=",
                                  "worker_threads=",
+                                 "backup=",
+                                 "override_device=",
+                                 "override_boot_partition=",
                                  "two_step",
                                  "include_secondary",
+                                 "mount_by_label=",
                                  "no_signing",
                                  "block",
                                  "binary=",
