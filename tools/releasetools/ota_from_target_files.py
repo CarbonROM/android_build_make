@@ -139,6 +139,10 @@ Non-A/B OTA specific options
       Verify the checksums of the updated system and vendor (if any) partitions.
       Non-A/B incremental OTAs only.
 
+  --override_boot_partition <string>
+      Override the partition where the boot image is installed.
+      Used for devices with a staging partition (Asus Transformer).
+
   -2  (--two_step)
       Generate a 'two-step' OTA package, where recovery is updated first, so
       that any changes made to the system partition are done using the new
@@ -259,6 +263,8 @@ OPTIONS.extra_script = None
 OPTIONS.worker_threads = multiprocessing.cpu_count() // 2
 if OPTIONS.worker_threads == 0:
   OPTIONS.worker_threads = 1
+OPTIONS.override_boot_partition = ''
+OPTIONS.mount_by_label = False
 OPTIONS.two_step = False
 OPTIONS.include_secondary = False
 OPTIONS.block_based = True
@@ -1228,6 +1234,8 @@ def main(argv):
       else:
         raise ValueError("Cannot parse value %r for option %r - only "
                          "integers are allowed." % (a, o))
+    elif o in ("--override_boot_partition"):
+      OPTIONS.override_boot_partition = a
     elif o in ("-2", "--two_step"):
       OPTIONS.two_step = True
     elif o == "--include_secondary":
@@ -1308,6 +1316,7 @@ def main(argv):
                                  "override_timestamp",
                                  "extra_script=",
                                  "worker_threads=",
+                                 "override_boot_partition=",
                                  "two_step",
                                  "include_secondary",
                                  "no_signing",
@@ -1399,6 +1408,9 @@ def main(argv):
 
   # Load OEM dicts if provided.
   OPTIONS.oem_dicts = _LoadOemDicts(OPTIONS.oem_source)
+
+  if "ota_mount_by_label" in OPTIONS.info_dict:
+    OPTIONS.mount_by_label = bool(OPTIONS.info_dict.get("ota_mount_by_label").lower() == 'true')
 
   # Assume retrofitting dynamic partitions when base build does not set
   # use_dynamic_partitions but target build does.
