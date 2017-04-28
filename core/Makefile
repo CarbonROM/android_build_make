@@ -4314,6 +4314,18 @@ ifneq ($(BOARD_SUPER_PARTITION_GROUPS),)
 	    $(if $(_group_partition_list), \
 	        echo "$(group)_partition_list=$(_group_partition_list)" >> $(zip_root)/META/dynamic_partitions_info.txt;))
 endif # BOARD_SUPER_PARTITION_GROUPS
+
+# Export signing properties on Carbon Builds
+ifneq ($(CARBON_BUILD),)
+	$(shell echo "CARBON_BUILD=$(CARBON_BUILD)" > $(PRODUCT_OUT)/signing.props)
+	$(shell echo "TARGET_OTA_ASSERT_DEVICE=$(TARGET_OTA_ASSERT_DEVICE)" >> $(PRODUCT_OUT)/signing.props)
+	$(shell echo "TARGET_RELEASETOOL_OTA_FROM_TARGET_SCRIPT=$(TARGET_RELEASETOOL_OTA_FROM_TARGET_SCRIPT)" >> $(PRODUCT_OUT)/signing.props)
+	$(shell echo "TARGET_DEVICE=$(TARGET_DEVICE)" >> $(PRODUCT_OUT)/signing.props)
+	$(shell echo "TARGET_SETS_FSTAB=$(TARGET_SETS_FSTAB)" >> $(PRODUCT_OUT)/signing.props)
+	$(shell echo "CARBON_VERSION=$(CARBON_VERSION)" >> $(PRODUCT_OUT)/signing.props)
+	$(shell echo "TARGET_RELEASETOOL_OTA_FROM_TARGET_ADDITIONAL_ARGS=$(TARGET_RELEASETOOL_OTA_FROM_TARGET_ADDITIONAL_ARGS)" >> $(PRODUCT_OUT)/signing.props)
+endif
+
 	@# TODO(b/134525174): Remove `-r` after addressing the issue with recovery patch generation.
 	$(hide) PATH=$(foreach p,$(INTERNAL_USERIMAGES_BINARY_PATHS),$(p):)$$PATH MKBOOTIMG=$(MKBOOTIMG) \
 	    build/make/tools/releasetools/add_img_to_target_files -a -r -v -p $(HOST_OUT) $(zip_root)
