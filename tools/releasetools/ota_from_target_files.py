@@ -132,10 +132,6 @@ Non-A/B OTA specific options
       Verify the checksums of the updated system and vendor (if any) partitions.
       Non-A/B incremental OTAs only.
 
-  --backup <boolean>
-      Enable or disable the execution of backuptool.sh.
-      Disabled by default.
-
   --override_device <device>
       Override device-specific asserts. Can be a comma-separated list.
 
@@ -227,7 +223,6 @@ OPTIONS.extra_script = None
 OPTIONS.worker_threads = multiprocessing.cpu_count() // 2
 if OPTIONS.worker_threads == 0:
   OPTIONS.worker_threads = 1
-OPTIONS.backuptool = False
 OPTIONS.override_device = 'auto'
 OPTIONS.override_boot_partition = ''
 OPTIONS.mount_by_label = False
@@ -970,12 +965,6 @@ else if get_stage("%(bcb_dev)s") == "3/3" then
 
   device_specific.FullOTA_InstallBegin()
 
-  if OPTIONS.backuptool:
-    script.Mount("/system", OPTIONS.mount_by_label)
-    script.RunBackup("backup")
-    if not OPTIONS.mount_by_label:
-      script.Unmount("/system")
-
   script.ShowProgress(0.5, 0)
 
   if OPTIONS.wipe_user_data:
@@ -1065,10 +1054,6 @@ else if get_stage("%(bcb_dev)s") == "3/3" then
       "boot.img", "boot.img", OPTIONS.input_tmp, "BOOT")
   common.CheckSize(boot_img.data, "boot.img", target_info)
   common.ZipWriteStr(output_zip, "boot.img", boot_img.data)
-
-  if OPTIONS.backuptool:
-    script.ShowProgress(0.2, 10)
-    script.RunBackup("restore")
 
   script.ShowProgress(0.2, 10)
   script.Print("Flashing boot.img")
@@ -2264,8 +2249,6 @@ def main(argv):
       else:
         raise ValueError("Cannot parse value %r for option %r - only "
                          "integers are allowed." % (a, o))
-    elif o in ("--backup"):
-      OPTIONS.backuptool = bool(a.lower() == 'true')
     elif o in ("--override_device"):
       OPTIONS.override_device = a
     elif o in ("--override_boot_partition"):
@@ -2324,7 +2307,6 @@ def main(argv):
                                  "override_timestamp",
                                  "extra_script=",
                                  "worker_threads=",
-                                 "backup=",
                                  "override_device=",
                                  "override_boot_partition=",
                                  "two_step",
