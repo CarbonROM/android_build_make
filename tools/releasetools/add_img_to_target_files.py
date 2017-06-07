@@ -336,7 +336,6 @@ def AddPartitionTable(output_zip, prefix="IMAGES/"):
   img.Write()
   bpt.Write()
 
-
 def AddUserdataExtra(output_zip):
   """Create extra userdata image and store it in output_zip."""
 
@@ -371,46 +370,6 @@ def AddUserdataExtra(output_zip):
   img.close()
   os.rmdir(user_dir)
   os.rmdir(temp_dir)
-
-
-def AddCache(output_zip, prefix="IMAGES/"):
-  """Create an empty cache image and store it in output_zip."""
-
-  img = OutputFile(output_zip, OPTIONS.input_tmp, prefix, "cache.img")
-  if os.path.exists(img.input_name):
-    print("cache.img already exists in %s, no need to rebuild..." % (prefix,))
-    return
-
-  image_props = build_image.ImagePropFromGlobalDict(OPTIONS.info_dict, "cache")
-  # The build system has to explicitly request for cache.img.
-  if "fs_type" not in image_props:
-    return
-
-  print("creating cache.img...")
-
-  # Use a fixed timestamp (01/01/2009) when packaging the image.
-  # Bug: 24377993
-  epoch = datetime.datetime.fromtimestamp(0)
-  timestamp = (datetime.datetime(2009, 1, 1) - epoch).total_seconds()
-  image_props["timestamp"] = int(timestamp)
-
-  # The name of the directory it is making an image out of matters to
-  # mkyaffs2image.  So we create a temp dir, and within it we create an
-  # empty dir named "cache", and build the image from that.
-  temp_dir = tempfile.mkdtemp()
-  OPTIONS.tempfiles.append(temp_dir)
-  user_dir = os.path.join(temp_dir, "cache")
-  os.mkdir(user_dir)
-
-  fstab = OPTIONS.info_dict["fstab"]
-  if fstab:
-    image_props["fs_type"] = fstab["/cache"].fs_type
-  succ = build_image.BuildImage(user_dir, image_props, img.name)
-  assert succ, "build cache.img image failed"
-
-  common.CheckSize(img.name, "cache.img", OPTIONS.info_dict)
-  img.Write()
-
 
 def AddImagesToTargetFiles(filename):
   if os.path.isdir(filename):
@@ -511,8 +470,6 @@ def AddImagesToTargetFiles(filename):
     AddUserdata(output_zip)
     banner("extrauserdata")
     AddUserdataExtra(output_zip)
-    banner("cache")
-    AddCache(output_zip)
   if OPTIONS.info_dict.get("board_bpt_enable", None) == "true":
     banner("partition-table")
     AddPartitionTable(output_zip)
