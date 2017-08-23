@@ -225,10 +225,10 @@ function aospremote()
 function mka() {
     case `uname -s` in
         Darwin)
-            m -j "$@"
+            m -j`sysctl hw.ncpu|cut -d" " -f2` "$@"
             ;;
         *)
-            mk_timer schedtool -B -n 10 -e ionice -n 7 m -j "$@"
+            m -j$(cat /proc/cpuinfo | grep "^processor" | wc -l) "$@"
             ;;
     esac
 }
