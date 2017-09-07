@@ -733,12 +733,13 @@ function lunch()
 
     if [ -z "$product" -o -z "$variant" ]
     then
+        echo TEST
         return 1
     fi
 
-    export TARGET_PRODUCT=$(get_build_var TARGET_PRODUCT)
-    export TARGET_BUILD_VARIANT=$(get_build_var TARGET_BUILD_VARIANT)
-    export TARGET_PLATFORM_VERSION=$(get_build_var TARGET_PLATFORM_VERSION)
+    export TARGET_PRODUCT=$product
+    export TARGET_BUILD_VARIANT=$variant
+    export TARGET_PLATFORM_VERSION=$version
     export TARGET_BUILD_TYPE=release
 
     echo
