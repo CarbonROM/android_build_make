@@ -33,7 +33,7 @@ Invoke ". build/envsetup.sh" from your shell to add the following functions to y
 - pathmod:    Get the directory containing a module.
 - refreshmod: Refresh list of modules for allmod/gomod.
 - aospremote: Add git remote for matching AOSP repository.
-- cmremote: Add git remote for matching CM repository.
+- losremote: Add git remote for matching Lineage repository.
 - crbremote: Add git remote for matching CarbonBeta repository.
 - crremote: Add gerrit remote for matching Carbon repository.
 - mka:      Builds using SCHED_BATCH on all processors
@@ -178,17 +178,17 @@ function check_variant()
     return 1
 }
 
-function cmremote()
+function losremote()
 {
-    git remote rm cm 2> /dev/null
+    git remote rm lineage 2> /dev/null
     if [ ! -d .git ]
     then
         echo .git directory not found. Please run this from the root directory of the Android repository you wish to set up.
     fi
     PROJECT=`pwd -P | sed s#$ANDROID_BUILD_TOP/##g`
     PFX="android_$(echo $PROJECT | sed 's/\//_/g')"
-    git remote add cm git@github.com:CyanogenMod/$PFX
-    echo "Remote 'cm' created"
+    git remote add lineage git@github.com:LineageOS/$PFX
+    echo "Remote 'lineage' created"
 }
 
 function crbremote()
