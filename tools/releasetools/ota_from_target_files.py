@@ -703,7 +703,8 @@ def WriteBlockIncrementalOTAPackage(target_zip, source_zip, output_zip):
 
   metadata = {}
   if not OPTIONS.override_prop:
-    metadata["pre-device"] = GetOemProperty("ro.product.device", oem_props, oem_dict,
+    metadata["pre-device"] = GetOemProperty("ro.product.device", source_oem_props,
+                                   oem_dicts and oem_dicts[0],
                                    OPTIONS.source_info_dict)
 
   metadata["ota-type"] = "BLOCK"
