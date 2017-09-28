@@ -1158,11 +1158,11 @@ def WriteABOTAPackageWithBrilloScript(target_file, output_file,
   if not OPTIONS.override_prop:
     metadata["pre-device"] = GetOemProperty("ro.product.device", oem_props,
                                    oem_dicts and oem_dicts[0],
-                                   OPTIONS.info_dict),
+                                   OPTIONS.info_dict)
     metadata["post-build"] = CalculateFingerprint(oem_props, oem_dicts and oem_dicts[0],
-                                         OPTIONS.info_dict),
+                                         OPTIONS.info_dict)
     metadata["post-build-incremental"] = GetBuildProp("ro.build.version.incremental",
-                                              OPTIONS.info_dict),
+                                              OPTIONS.info_dict)
 
   metadata["post-timestamp"] = GetBuildProp("ro.build.date.utc", OPTIONS.info_dict)
   metadata["ota-required-cache"] = "0"
