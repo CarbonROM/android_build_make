@@ -1928,7 +1928,7 @@ define build-recoveryramdisk
   $(hide) mkdir -p $(TARGET_RECOVERY_ROOT_OUT)/sdcard $(TARGET_RECOVERY_ROOT_OUT)/tmp
   @echo -e ${CL_CYN}"Copying baseline ramdisk..."${CL_RST}
   # Use rsync because "cp -Rf" fails to overwrite broken symlinks on Mac.
-  $(hide) rsync -a --exclude=sdcard $(IGNORE_RECOVERY_SEPOLICY) $(IGNORE_CACHE_LINK) $(TARGET_ROOT_OUT) $(TARGET_RECOVERY_OUT)
+  $(hide) rsync -a --exclude=sdcard --exclude=vendor $(IGNORE_RECOVERY_SEPOLICY) $(IGNORE_CACHE_LINK) $(TARGET_ROOT_OUT) $(TARGET_RECOVERY_OUT)
   @echo -e ${CL_CYN}"Modifying ramdisk contents..."${CL_RST}
   $(if $(filter true,$(BOARD_BUILD_SYSTEM_ROOT_IMAGE)),, \
     $(hide) ln -sf /system/bin/init $(TARGET_RECOVERY_ROOT_OUT)/init)
