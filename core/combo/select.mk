@@ -32,7 +32,7 @@ $(combo_var_prefix)GLOBAL_CFLAGS := $(BOARD_GLOBAL_CFLAGS)
 $(combo_var_prefix)RELEASE_CFLAGS := $(BOARD_RELEASE_CFLAGS)
 $(combo_var_prefix)GLOBAL_CPPFLAGS := $(BOARD_GLOBAL_CPPFLAGS)
 
-$(combo_var_prefix)GLOBAL_ARFLAGS := crsPD
+$(combo_var_prefix)GLOBAL_ARFLAGS := cqsD
 
 $(combo_var_prefix)STATIC_LIB_SUFFIX := .a
 
