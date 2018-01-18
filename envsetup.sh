@@ -1876,4 +1876,19 @@ check_bash_version && {
     done
 }
 
+# Enable SD-LLVM if available
+if [ -d $(gettop)/vendor/qcom/sdclang-4.0 ]; then
+    case `uname -s` in
+        Darwin)
+            # Darwin is not supported yet
+            ;;
+        *)
+            export SDCLANG=true
+            export SDCLANG_PATH=$(gettop)/vendor/qcom/sdclang-4.0/linux-x86_64/bin
+            export SDCLANG_LTO_DEFS=$(gettop)/vendor/carbon/sdclang/sdllvm-lto-defs.mk
+            export SDCLANG_COMMON_FLAGS=" -O3 -fvectorize -mllvm -polly-run-dce"
+            ;;
+    esac
+fi
+
 export ANDROID_BUILD_TOP=$(gettop)
