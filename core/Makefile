@@ -1482,7 +1482,14 @@ systemimage-squisher: $(INTERNAL_SYSTEMIMAGE_FILES)
 
 .PHONY: systemimage-squisher
 
-FULL_SYSTEMIMAGE_DEPS := $(INTERNAL_SYSTEMIMAGE_FILES) $(INTERNAL_USERIMAGES_DEPS)
+.PHONY: priv-app-whitelist
+priv-app-whitelist: $(INTERNAL_SYSTEMIMAGE_FILES)
+	@echo -e ${CL_YLW}"Generating priv-app permissions whitelist"${CL_RST}
+	$(hide) PERMS="$(TOPDIR)development/tools/privapp_permissions/privapp_permissions.py" \
+	echo "$PERMS" > $(TARGET_OUT_ETC)/permissions/priv-app-whitelist.xml
+
+
+FULL_SYSTEMIMAGE_DEPS := $(INTERNAL_SYSTEMIMAGE_FILES) $(INTERNAL_USERIMAGES_DEPS) priv-app-whitelist
 
 ifdef BOARD_USES_SYSTEMIMAGE_SQUISHER
 	FULL_SYSTEMIMAGE_DEPS += systemimage-squisher
