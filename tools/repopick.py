@@ -66,7 +66,8 @@ def fetch_query_via_ssh(remote_url, query):
 
 
     out = subprocess.check_output(['ssh', '-x', '-p{0}'.format(port), userhost, 'gerrit', 'query', '--format=JSON --patch-sets --current-patch-set', query])
-
+    if not hasattr(out, 'encode'):
+        out = out.decode()
     reviews = []
     for line in out.split('\n'):
         try:
@@ -82,7 +83,7 @@ def fetch_query_via_ssh(remote_url, query):
                     'fetch': {
                         'ssh': {
                             'ref': patch_set['ref'],
-                            'url': u'ssh://{0}:{1}/{2}'.format(userhost, port, data['project'])
+                            'url': 'ssh://{0}:{1}/{2}'.format(userhost, port, data['project'])
                         }
                     }
                 } for patch_set in data['patchSets']},
@@ -105,7 +106,7 @@ def fetch_query_via_http(remote_url, query):
     reviews = json.loads(data[5:])
 
     for review in reviews:
-        review[u'number'] = review.pop('_number')
+        review['number'] = review.pop('_number')
 
     return reviews
 
@@ -120,25 +121,27 @@ def fetch_query(remote_url, query):
         raise Exception('Gerrit URL should be in the form http[s]://hostname/ or ssh://[user@]host[:port]')
 
 if __name__ == '__main__':
-    # Default to Carbon Gerrit
-    default_gerrit = 'https://review.carbonrom.org'
+    # Default to CyanogenMod Gerrit
+    default_gerrit = 'http://review.cyanogenmod.org'
 
     parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, description=textwrap.dedent('''\
         repopick.py is a utility to simplify the process of cherry picking
-        patches from CarbonROM's Gerrit instance (or any gerrit instance of your choosing)
+        patches from CyanogenMod's Gerrit instance (or any gerrit instance of your choosing)
+
         Given a list of change numbers, repopick will cd into the project path
         and cherry pick the latest patch available.
+
         With the --start-branch argument, the user can specify that a branch
         should be created before cherry picking. This is useful for
         cherry-picking many patches into a common branch which can be easily
         abandoned later (good for testing other's changes.)
+
         The --abandon-first argument, when used in conjunction with the
         --start-branch option, will cause repopick to abandon the specified
         branch in all repos first before performing any cherry picks.'''))
     parser.add_argument('change_number', nargs='*', help='change number to cherry pick.  Use {change number}/{patchset number} to get a specific revision.')
     parser.add_argument('-i', '--ignore-missing', action='store_true', help='do not error out if a patch applies to a missing directory')
     parser.add_argument('-s', '--start-branch', nargs=1, help='start the specified branch before cherry picking')
-    parser.add_argument('-r', '--reset', action='store_true', help='reset to initial state (abort cherry-pick) if there is a conflict')
     parser.add_argument('-a', '--abandon-first', action='store_true', help='before cherry picking, abandon the branch specified in --start-branch')
     parser.add_argument('-b', '--auto-branch', action='store_true', help='shortcut to "--start-branch auto --abandon-first --ignore-missing"')
     parser.add_argument('-q', '--quiet', action='store_true', help='print as little as possible')
@@ -149,6 +152,7 @@ if __name__ == '__main__':
     parser.add_argument('-t', '--topic', help='pick all commits from a specified topic')
     parser.add_argument('-Q', '--query', help='pick all commits using the specified query')
     parser.add_argument('-g', '--gerrit', default=default_gerrit, help='Gerrit Instance to use. Form proto://[user@]host[:port]')
+    parser.add_argument('-e', '--exclude', nargs=1, help='exclude a list of commit numbers separated by a ,')
     args = parser.parse_args()
     if not args.start_branch and args.abandon_first:
         parser.error('if --abandon-first is set, you must also give the branch name with --start-branch')
@@ -181,8 +185,10 @@ if __name__ == '__main__':
     if args.abandon_first:
         # Determine if the branch already exists; skip the abandon if it does not
         plist = subprocess.check_output(['repo', 'info'])
+        if not hasattr(plist, 'encode'):
+            plist = plist.decode()
         needs_abandon = False
-        for pline in plist:
+        for pline in plist.splitlines():
             matchObj = re.match(r'Local Branches.*\[(.*)\]', pline)
             if matchObj:
                 local_branches = re.split('\s*,\s*', matchObj.group(1))
@@ -203,7 +209,8 @@ if __name__ == '__main__':
     manifest = subprocess.check_output(['repo', 'manifest'])
     xml_root = ElementTree.fromstring(manifest)
     projects = xml_root.findall('project')
-    default_revision = xml_root.findall('.//*[@name="carbon"]')[0].get('revision').split('/')[-1]
+    remotes = xml_root.findall('remote')
+    default_revision = xml_root.findall('default')[0].get('revision')
 
     #dump project data into the a list of dicts with the following data:
     #{project: {path, revision}}
@@ -213,10 +220,15 @@ if __name__ == '__main__':
         path = project.get('path')
         revision = project.get('revision')
         if revision is None:
+            for remote in remotes:
+                if remote.get('name') == project.get('remote'):
+                    revision = remote.get('revision')
+            if revision is None:
             revision = default_revision
 
         if not name in project_name_to_data:
             project_name_to_data[name] = {}
+        revision = revision.split('refs/heads/')[-1]
         project_name_to_data[name][revision] = path
 
     # get data on requested changes
@@ -229,23 +241,42 @@ if __name__ == '__main__':
         reviews = fetch_query(args.gerrit, args.query)
         change_numbers = sorted([str(r['number']) for r in reviews])
     if args.change_number:
-        reviews = fetch_query(args.gerrit, ' OR '.join('change:{0}'.format(x.split('/')[0]) for x in args.change_number))
-        change_numbers = args.change_number
+        for c in args.change_number:
+            if '-' in c:
+                templist = c.split('-')
+                for i in range(int(templist[0]), int(templist[1]) + 1):
+                    change_numbers.append(str(i))
+            else:
+                change_numbers.append(c)
+        reviews = fetch_query(args.gerrit, ' OR '.join('change:{0}'.format(x.split('/')[0]) for x in change_numbers))
 
     # make list of things to actually merge
     mergables = []
+
+    # If --exclude is given, create the list of commits to ignore
+    exclude = []
+    if args.exclude:
+        exclude = args.exclude[0].split(',')
 
     for change in change_numbers:
         patchset = None
         if '/' in change:
             (change, patchset) = change.split('/')
-        change = int(change)
 
-        review = [x for x in reviews if x['number'] == change][0]
+        if change in exclude:
+            continue
+
+        change = int(change)
+        review = next((x for x in reviews if x['number'] == change), None)
+        if review is None:
+            print('Change %d not found, skipping' % change)
+            continue
+
         mergables.append({
             'subject': review['subject'],
             'project': review['project'],
             'branch': review['branch'],
+            'change_id': review['change_id'],
             'change_number': review['number'],
             'status': review['status'],
             'fetch': None
@@ -262,7 +293,7 @@ if __name__ == '__main__':
     for item in mergables:
         args.quiet or print('Applying change number {0}...'.format(item['id']))
         # Check if change is open and exit if it's not, unless -f is specified
-        if (item['status'] != 'OPEN' and item['status'] != 'NEW' and item['status'] != 'DRAFT') and not args.query:
+        if (item['status'] != 'OPEN' and item['status'] != 'NEW') and not args.query:
             if args.force:
                 print('!! Force-picking a closed change !!\n')
             else:
@@ -288,6 +319,29 @@ if __name__ == '__main__':
         if args.start_branch:
             subprocess.check_output(['repo', 'start', args.start_branch[0], project_path])
 
+        # Determine the maximum commits to check already picked changes
+        check_picked_count = 10
+        branch_commits_count = int(subprocess.check_output(['git', 'rev-list', '--count', 'HEAD'], cwd=project_path))
+        if branch_commits_count <= check_picked_count:
+            check_picked_count = branch_commits_count - 1
+
+        # Check if change is already picked to HEAD...HEAD~check_picked_count
+        found_change = False
+        for i in range(0, check_picked_count):
+            output = subprocess.check_output(['git', 'show', '-q', 'HEAD~{0}'.format(i)], cwd=project_path).split()
+            if 'Change-Id:' in output:
+                head_change_id = ''
+                for j,t in enumerate(reversed(output)):
+                    if t == 'Change-Id:':
+                        head_change_id = output[len(output) - j]
+                        break
+                if head_change_id.strip() == item['change_id']:
+                    print('Skipping {0} - already picked in {1} as HEAD~{2}'.format(item['id'], project_path, i))
+                    found_change = True
+                    break
+        if found_change:
+            continue
+
         # Print out some useful info
         if not args.quiet:
             print('--> Subject:       "{0}"'.format(item['subject']))
@@ -305,18 +359,18 @@ if __name__ == '__main__':
                 print('Trying to fetch the change from GitHub')
 
             if args.pull:
-                cmd = ['git pull --no-edit', item['fetch'][method]['url'], item['fetch'][method]['ref']]
+                cmd = ['git pull --no-edit github', item['fetch'][method]['ref']]
             else:
-                cmd = ['git fetch', item['fetch'][method]['url'], item['fetch'][method]['ref']]
+                cmd = ['git fetch github', item['fetch'][method]['ref']]
             if args.quiet:
                 cmd.append('--quiet')
             else:
                 print(cmd)
             result = subprocess.call([' '.join(cmd)], cwd=project_path, shell=True)
-            if result != 0:
+            FETCH_HEAD = '{0}/.git/FETCH_HEAD'.format(project_path)
+            if result != 0 and os.stat(FETCH_HEAD).st_size != 0:
                 print('ERROR: git command failed')
                 sys.exit(result)
-            FETCH_HEAD = '{0}/.git/FETCH_HEAD'.format(project_path)
         # Check if it worked
         if args.gerrit != default_gerrit or os.stat(FETCH_HEAD).st_size == 0:
             # If not using the default gerrit or github failed, fetch from gerrit.
@@ -347,12 +401,7 @@ if __name__ == '__main__':
                 cmd_out = None
             result = subprocess.call(cmd, cwd=project_path, shell=True, stdout=cmd_out, stderr=cmd_out)
             if result != 0:
-                if args.reset:
-                    print('ERROR: git command failed, aborting cherry-pick')
-                    cmd = ['git cherry-pick --abort']
-                    subprocess.call(cmd, cwd=project_path, shell=True, stdout=cmd_out, stderr=cmd_out)
-                else:
-                    print('ERROR: git command failed')
+                print('ERROR: git command failed')
                 sys.exit(result)
         if not args.quiet:
             print('')
