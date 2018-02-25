@@ -61,7 +61,8 @@ def GetBlockDifferences(target_zip, source_zip, target_info, source_info,
     return common.BlockDifference(name, partition_tgt, partition_src,
                                   check_first_block,
                                   version=blockimgdiff_version,
-                                  disable_imgdiff=disable_imgdiff)
+                                  disable_imgdiff=disable_imgdiff,
+                                  brotli=OPTIONS.brotli)
 
   if source_zip:
     # See notes in common.GetUserImage()
@@ -84,7 +85,7 @@ def GetBlockDifferences(target_zip, source_zip, target_info, source_info,
                                 info_dict=target_info,
                                 reset_file_map=True)
       block_diff_dict[partition] = common.BlockDifference(partition, tgt,
-                                                          src=None)
+                                                          src=None, brotli=OPTIONS.brotli)
     # Incremental OTA update.
     else:
       block_diff_dict[partition] = GetIncrementalBlockDifferenceForPartition(

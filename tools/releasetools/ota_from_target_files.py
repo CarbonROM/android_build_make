@@ -139,6 +139,9 @@ Non-A/B OTA specific options
       Verify the checksums of the updated system and vendor (if any) partitions.
       Non-A/B incremental OTAs only.
 
+  --brotli <boolean>
+     Enable (default) or disable usage of brotli
+
   --override_boot_partition <string>
       Override the partition where the boot image is installed.
       Used for devices with a staging partition (Asus Transformer).
@@ -292,6 +295,8 @@ OPTIONS.custom_images = {}
 OPTIONS.disable_vabc = False
 OPTIONS.spl_downgrade = False
 OPTIONS.vabc_downgrade = False
+
+OPTIONS.brotli = True
 
 POSTINSTALL_CONFIG = 'META/postinstall_config.txt'
 DYNAMIC_PARTITION_INFO = 'META/dynamic_partitions_info.txt'
@@ -1235,6 +1240,8 @@ def main(argv):
       else:
         raise ValueError("Cannot parse value %r for option %r - only "
                          "integers are allowed." % (a, o))
+    elif o in ("--brotli"):
+      OPTIONS.brotli = bool(a.lower() == 'true')
     elif o in ("--override_boot_partition"):
       OPTIONS.override_boot_partition = a
     elif o in ("-2", "--two_step"):
@@ -1317,6 +1324,7 @@ def main(argv):
                                  "override_timestamp",
                                  "extra_script=",
                                  "worker_threads=",
+                                 "brotli=",
                                  "override_boot_partition=",
                                  "two_step",
                                  "include_secondary",
