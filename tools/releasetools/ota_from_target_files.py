@@ -92,6 +92,9 @@ Usage:  ota_from_target_files [flags] input_target_files output_ota_package
       Enable or disable the execution of backuptool.sh.
       Disabled by default.
 
+  --brotli <boolean>
+     Enable (default) or disable usage of brotli
+
   --override_device <device>
       Override device-specific asserts. Can be a comma-separated list.
 
@@ -206,6 +209,7 @@ OPTIONS.payload_signer = None
 OPTIONS.payload_signer_args = []
 OPTIONS.extracted_input = None
 OPTIONS.key_passwords = []
+OPTIONS.brotli = True
 
 METADATA_NAME = 'META-INF/com/android/metadata'
 UNZIP_PATTERN = ['IMAGES/*', 'META/*', 'INSTALL/*', 'SYSTEM/build.prop']
@@ -574,7 +578,7 @@ else if get_stage("%(bcb_dev)s") == "3/3" then
   # do it.
   system_tgt = GetImage("system", OPTIONS.input_tmp)
   system_tgt.ResetFileMap()
-  system_diff = common.BlockDifference("system", system_tgt, src=None)
+  system_diff = common.BlockDifference("system", system_tgt, src=None, brotli=OPTIONS.brotli)
   system_diff.WriteScript(script, output_zip)
 
   boot_img = common.GetBootableImage(
@@ -585,7 +589,7 @@ else if get_stage("%(bcb_dev)s") == "3/3" then
 
     vendor_tgt = GetImage("vendor", OPTIONS.input_tmp)
     vendor_tgt.ResetFileMap()
-    vendor_diff = common.BlockDifference("vendor", vendor_tgt)
+    vendor_diff = common.BlockDifference("vendor", vendor_tgt, brotli=OPTIONS.brotli)
     vendor_diff.WriteScript(script, output_zip)
 
   if OPTIONS.backuptool:
@@ -769,7 +773,8 @@ def WriteBlockIncrementalOTAPackage(target_zip, source_zip, output_zip):
   system_diff = common.BlockDifference("system", system_tgt, system_src,
                                        check_first_block,
                                        version=blockimgdiff_version,
-                                       disable_imgdiff=disable_imgdiff)
+                                       disable_imgdiff=disable_imgdiff,
+                                       brotli=OPTIONS.brotli)
 
   if HasVendorPartition(target_zip):
     if not HasVendorPartition(source_zip):
@@ -785,7 +790,8 @@ def WriteBlockIncrementalOTAPackage(target_zip, source_zip, output_zip):
     vendor_diff = common.BlockDifference("vendor", vendor_tgt, vendor_src,
                                          check_first_block,
                                          version=blockimgdiff_version,
-                                         disable_imgdiff=disable_imgdiff)
+                                         disable_imgdiff=disable_imgdiff,
+                                         brotli=OPTIONS.brotli)
   else:
     vendor_diff = None
 
@@ -1056,13 +1062,13 @@ def WriteVerifyPackage(input_zip, output_zip):
 
   system_tgt = GetImage("system", OPTIONS.input_tmp)
   system_tgt.ResetFileMap()
-  system_diff = common.BlockDifference("system", system_tgt, src=None)
+  system_diff = common.BlockDifference("system", system_tgt, src=None, brotli=OPTIONS.brotli)
   system_diff.WriteStrictVerifyScript(script)
 
   if HasVendorPartition(input_zip):
     vendor_tgt = GetImage("vendor", OPTIONS.input_tmp)
     vendor_tgt.ResetFileMap()
-    vendor_diff = common.BlockDifference("vendor", vendor_tgt, src=None)
+    vendor_diff = common.BlockDifference("vendor", vendor_tgt, src=None, brotli=OPTIONS.brotli)
     vendor_diff.WriteStrictVerifyScript(script)
 
   # Device specific partitions, such as radio, bootloader and etc.
@@ -1404,6 +1410,8 @@ def main(argv):
                          "integers are allowed." % (a, o))
     elif o in ("--backup"):
       OPTIONS.backuptool = bool(a.lower() == 'true')
+    elif o in ("--brotli"):
+      OPTIONS.brotli = bool(a.lower() == 'true')
     elif o in ("--override_device"):
       OPTIONS.override_device = a
     elif o in ("--override_prop"):
@@ -1458,6 +1466,7 @@ def main(argv):
                                  "extra_script=",
                                  "worker_threads=",
                                  "backup=",
+                                 "brotli=",
                                  "override_device=",
                                  "override_prop=",
                                  "override_boot_partition=",
