@@ -327,6 +327,8 @@ $(eval $(call build-properties,\
 # -----------------------------------------------------------------
 # vendor/build.prop
 #
+# Prevent overwriting build.prop in system
+ifneq ($(TARGET_COPY_OUT_VENDOR),system)
 _prop_files_ := $(if $(TARGET_VENDOR_PROP),\
     $(TARGET_VENDOR_PROP),\
     $(wildcard $(TARGET_DEVICE_DIR)/vendor.prop))
@@ -361,6 +363,7 @@ $(eval $(call build-properties,\
     $(PRODUCT_VENDOR_PROPERTY_BLACKLIST),\
     $(empty),\
     $(empty)))
+endif  # TARGET_COPY_OUT_VENDOR=system
 
 # -----------------------------------------------------------------
 # product/etc/build.prop
