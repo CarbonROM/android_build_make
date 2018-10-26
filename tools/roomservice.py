@@ -112,7 +112,7 @@ def iterate_manifests():
         try:
             man = ES.parse(file)
             man = man.getroot()
-        except IOError, ES.ParseError:
+        except (IOError, ES.ParseError):
             print("WARNING: error while parsing %s" % file)
         else:
             for project in man.findall("project"):
@@ -169,7 +169,7 @@ def append_to_manifest(project):
     try:
         lm = ES.parse('/'.join([local_manifest_dir, "roomservice.xml"]))
         lm = lm.getroot()
-    except IOError, ES.ParseError:
+    except (IOError, ES.ParseError):
         lm = ES.Element("manifest")
     lm.append(project)
     return lm
