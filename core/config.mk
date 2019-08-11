@@ -234,10 +234,6 @@ FIND_LEAVES_EXCLUDES := $(addprefix --prune=, $(SCAN_EXCLUDE_DIRS) .repo .git)
 # be device and hardware independent.
 $(call project-set-path-variant,recovery,RECOVERY_VARIANT,bootable/recovery)
 
-ifneq ($(CARBON_BUILD),)
-include vendor/carbon/config/BoardConfigCarbon.mk
-endif
-
 # The build system exposes several variables for where to find the kernel
 # headers:
 #   TARGET_DEVICE_KERNEL_HEADERS is automatically created for the current
@@ -1188,6 +1184,7 @@ ifneq ($(CARBON_BUILD),)
 ## We need to be sure the global selinux policies are included
 ## last, to avoid accidental resetting by device configs
 $(eval include device/carbon/sepolicy/common/sepolicy.mk)
+include vendor/carbon/config/BoardConfigCarbon.mk
 endif
 
 # Include any vendor specific config.mk file
