@@ -55,6 +55,12 @@ PLATFORM_VERSION_LAST_STABLE := 13
 # release build.  If this is a final release build, it is simply "REL".
 PLATFORM_VERSION_CODENAME.TP1A := REL
 
+ifndef PRODUCT_TARGET_VNDK_VERSION
+  # This is the SDK version of the prebuilt vendor image and is used to
+  # overlay vendor image from TARGET_COPY_OUT_VENDOR.
+  PRODUCT_TARGET_VNDK_VERSION := $(PLATFORM_SDK_VERSION)
+endif
+
 # This is the user-visible version.  In a final release build it should
 # be empty to use PLATFORM_VERSION as the user-visible version.  For
 # a preview release it can be set to a user-friendly value like `12 Preview 1`

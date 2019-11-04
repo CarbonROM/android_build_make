@@ -1210,7 +1210,8 @@ define resolve-product-relative-paths
           $(subst $(_vendor_dlkm_path_placeholder),$(TARGET_COPY_OUT_VENDOR_DLKM),\
             $(subst $(_odm_dlkm_path_placeholder),$(TARGET_COPY_OUT_ODM_DLKM),\
               $(subst $(_system_dlkm_path_placeholder),$(TARGET_COPY_OUT_SYSTEM_DLKM),\
-                $(foreach p,$(1),$(call append-path,$(PRODUCT_OUT),$(p)$(2))))))))))
+                $(subst $(_vendor_overlay_path_placeholder),$(TARGET_COPY_OUT_VENDOR_OVERLAY),\
+                  $(foreach p,$(1),$(call append-path,$(PRODUCT_OUT),$(p)$(2)))))))))))
 endef
 
 # Returns modules included automatically as a result of certain BoardConfig
