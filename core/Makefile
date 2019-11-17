@@ -2029,9 +2029,14 @@ $(recovery_uncompressed_ramdisk): $(MKBOOTFS) \
 	    $(RECOVERY_INSTALL_OTA_KEYS) \
 	    $(BOARD_RECOVERY_KERNEL_MODULES) \
 	    $(DEPMOD)
+ifneq ($(TARGET_PREBUILT_RECOVERY_RAMDISK),)
+	    @echo ----- Copying uncompressed recovery ramdisk ------
+	    $(eval $(call copy-one-file,$(TARGET_PREBUILT_RECOVERY_RAMDISK_CPIO),$(recovery_uncompressed_ramdisk)))
+else
 	    $(call build-recoveryramdisk)
 	    @echo ----- Making uncompressed recovery ramdisk ------
 	    $(hide) $(MKBOOTFS) $(TARGET_RECOVERY_ROOT_OUT) > $@
+endif
 
 $(recovery_ramdisk): $(MINIGZIP) \
 	    $(recovery_uncompressed_ramdisk)
