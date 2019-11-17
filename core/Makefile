@@ -1900,6 +1900,16 @@ $(RECOVERY_INSTALL_OTA_KEYS): $(SOONG_ZIP) $(OTA_PUBLIC_KEYS) $(extra_keys)
 
 RECOVERYIMAGE_ID_FILE := $(PRODUCT_OUT)/recovery.id
 
+ifneq ($(TARGET_PREBUILT_RECOVERY_RAMDISK_CPIO),)
+define build-recoveryramdisk
+  @echo -e ${CL_CYN}"----- Extracting recovery ramdisk ------"${CL_RST}
+  $(hide) mkdir -p $(TARGET_RECOVERY_OUT)
+  $(hide) mkdir -p $(TARGET_RECOVERY_ROOT_OUT)
+  $(hide) rm -rf $(TARGET_RECOVERY_ROOT_OUT)/*
+  $(hide) cp $(TARGET_PREBUILT_RECOVERY_RAMDISK_CPIO) $(OUT_DIR)/prebuilt_ramdisk-recovery.cpio
+  $(hide) cd $(TARGET_RECOVERY_ROOT_OUT) && cpio -id < $(OUT_DIR)/prebuilt_ramdisk-recovery.cpio && cd -
+endef
+else
 define build-recoveryramdisk
   @echo -e ${CL_CYN}"----- Making recovery ramdisk ------"${CL_RST}
   $(hide) mkdir -p $(TARGET_RECOVERY_OUT)
@@ -1935,6 +1945,7 @@ define build-recoveryramdisk
   $(hide) ln -sf prop.default $(TARGET_RECOVERY_ROOT_OUT)/default.prop
   $(BOARD_RECOVERY_IMAGE_PREPARE)
 endef
+endif
 
 # $(1): output file
 define build-recoveryimage-target
