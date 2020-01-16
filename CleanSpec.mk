@@ -773,6 +773,8 @@ $(call add-clean-step, rm -rf $(SOONG_HOST_OUT))
 # Don't use SOONG_HOST_OUT, it is now an alias for HOST_OUT.
 $(call add-clean-step, rm -rf $(OUT_DIR)/soong/host)
 
+$(call add-clean-step, rm -rf $(TARGET_RECOVERY_ROOT_OUT))
+
 # ************************************************
 # NEWER CLEAN STEPS MUST BE AT THE END OF THE LIST
 # ************************************************
