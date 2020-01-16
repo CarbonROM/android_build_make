@@ -757,6 +757,8 @@ $(call add-clean-step, rm -rf $(OUT_DIR)/soong/host/*/lib*/libconscrypt_openjdk_
 # vendor-ramdisk renamed to vendor_ramdisk
 $(call add-clean-step, rm -rf $(PRODUCT_OUT)/vendor-ramdisk)
 
+$(call add-clean-step, rm -rf $(TARGET_RECOVERY_ROOT_OUT))
+
 # ************************************************
 # NEWER CLEAN STEPS MUST BE AT THE END OF THE LIST
 # ************************************************
