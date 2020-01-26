@@ -1177,7 +1177,6 @@ ifneq ($(CARBON_BUILD),)
 ## We need to be sure the global selinux policies are included
 ## last, to avoid accidental resetting by device configs
 $(eval include device/carbon/sepolicy/common/sepolicy.mk)
-include vendor/carbon/config/BoardConfigCarbon.mk
 endif
 
 # Include any vendor specific config.mk file
