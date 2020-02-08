@@ -266,3 +266,8 @@ org\.ifaa\.android\.manager.*
 ###################################################
 # QCOM FMRadio
 qcom\.fmradio.*
+
+###################################################
+# LineageOS
+vendor.lineage.touch.*
+
