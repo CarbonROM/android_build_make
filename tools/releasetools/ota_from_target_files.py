@@ -1154,10 +1154,6 @@ else if get_stage("%(bcb_dev)s") == "3/3" then
 
   AddCompatibilityArchiveIfTrebleEnabled(input_zip, output_zip, target_info)
 
-  if OPTIONS.backuptool:
-    script.ShowProgress(0.02, 10)
-    script.RunBackup("restore", sysmount)
-
   boot_img = common.GetBootableImage(
       "boot.img", "boot.img", OPTIONS.input_tmp, "BOOT")
 
@@ -1181,6 +1177,10 @@ else if get_stage("%(bcb_dev)s") == "3/3" then
   if OPTIONS.wipe_user_data:
     script.ShowProgress(0.1, 10)
     script.FormatPartition("/data")
+
+  if OPTIONS.backuptool:
+    script.ShowProgress(0.02, 10)
+    script.RunBackup("restore", sysmount)
 
   if OPTIONS.two_step:
     script.AppendExtra("""
