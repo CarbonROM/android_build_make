@@ -1154,10 +1154,6 @@ else if get_stage("%(bcb_dev)s") == "3/3" then
 
   AddCompatibilityArchiveIfTrebleEnabled(input_zip, output_zip, target_info)
 
-  if OPTIONS.backuptool:
-    script.ShowProgress(0.02, 10)
-    script.RunBackup("restore", sysmount)
-
   boot_img = common.GetBootableImage(
       "boot.img", "boot.img", OPTIONS.input_tmp, "BOOT")
 
@@ -1172,6 +1168,10 @@ else if get_stage("%(bcb_dev)s") == "3/3" then
   script.ShowProgress(0.1, 0)
   script.Print("Enjoy CarbonROM!");
   device_specific.FullOTA_InstallEnd()
+
+  if OPTIONS.backuptool:
+    script.ShowProgress(0.02, 10)
+    script.RunBackup("restore", sysmount)
 
   if OPTIONS.extra_script is not None:
     script.AppendExtra(OPTIONS.extra_script)
