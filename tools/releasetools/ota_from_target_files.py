@@ -1081,10 +1081,6 @@ else if get_stage("%(bcb_dev)s") == "3/3" then
 
   AddCompatibilityArchiveIfTrebleEnabled(input_zip, output_zip, target_info)
 
-  if OPTIONS.backuptool:
-    script.ShowProgress(0.02, 10)
-    script.RunBackup("restore", sysmount)
-
   boot_img = common.GetBootableImage(
       "boot.img", "boot.img", OPTIONS.input_tmp, "BOOT")
 
@@ -1095,6 +1091,10 @@ else if get_stage("%(bcb_dev)s") == "3/3" then
   script.Print("Flashing boot.img")
   bootpartition = "/boot" if OPTIONS.override_boot_partition == "" else OPTIONS.override_boot_partition
   script.WriteRawImage(bootpartition, "boot.img")
+
+  if OPTIONS.backuptool:
+    script.ShowProgress(0.02, 10)
+    script.RunBackup("restore", sysmount)
 
   script.ShowProgress(0.1, 0)
   script.Print("Enjoy CarbonROM!");
