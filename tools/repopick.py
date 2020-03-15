@@ -234,7 +234,7 @@ if __name__ == '__main__':
         elif current_b in parents_a:
             return 1
         else:
-            return cmp(review_a['number'], review_b['number'])
+            return ((review_a['number'] > review_b['number']) - (review_a['number'] < review_b['number']))
 
     if args.topic:
         reviews = fetch_query(args.gerrit, 'topic:{0}'.format(args.topic))
