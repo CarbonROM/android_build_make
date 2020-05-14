@@ -55,7 +55,7 @@ def check_repo_exists(git_data, device):
         android_team=android_team,
         device=device
     )
-    matches = filter(lambda x: re.match(re_match, x), git_data)
+    matches = list(filter(lambda x: re.match(re_match, x), git_data))
     if len(matches) != 1:
         raise Exception("{device} not found,"
                         "exiting roomservice".format(device=device))
@@ -112,7 +112,7 @@ def iterate_manifests():
         try:
             man = ES.parse(file)
             man = man.getroot()
-        except IOError, ES.ParseError:
+        except (IOError, ES.ParseError) as e:
             print("WARNING: error while parsing %s" % file)
         else:
             for project in man.findall("project"):
@@ -169,7 +169,7 @@ def append_to_manifest(project):
     try:
         lm = ES.parse('/'.join([local_manifest_dir, "roomservice.xml"]))
         lm = lm.getroot()
-    except IOError, ES.ParseError:
+    except (IOError, ES.ParseError) as e:
         lm = ES.Element("manifest")
     lm.append(project)
     return lm
