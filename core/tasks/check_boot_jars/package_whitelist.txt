@@ -119,12 +119,6 @@ libcore\..*
 android\..*
 com\.android\..*
 
-# CAF
-org\.codeaurora\..*
-
-#AliPay
-org\.ifaa\.android\.manager
-
 ###################################################
 # android.test.base.jar
 junit\.extensions
@@ -247,3 +241,14 @@ com\.google\.vr\.platform.*
 # Packages used for Android in Chrome OS
 org\.chromium\.arc
 org\.chromium\.arc\..*
+
+###################################################
+# CodeAurora IMS functionality needed by frameworks/opt/telephony
+# as part of "ims-ext-common"
+org\.codeaurora\.ims.*
+# telephony-ext:
+org\.codeaurora\.internal.*
+
+###################################################
+# IFAA Manager used for Alipay and/or WeChat payment
+org\.ifaa\.android\.manager.*
