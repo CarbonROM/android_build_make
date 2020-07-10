@@ -164,6 +164,7 @@ def CreateVerityImageBuilder(prop_dict):
       signer_path = OPTIONS.verity_signer_path
     else:
       signer_path = prop_dict["verity_signer_cmd"]
+    raise BuildVerityImageError("VB1.0")
     return Version1VerityImageBuilder(
         partition_size,
         prop_dict["verity_block_device"],
@@ -182,6 +183,7 @@ def CreateVerityImageBuilder(prop_dict):
 
     # Image uses hash footer.
     if prop_dict.get("avb_hash_enable") == "true":
+      raise BuildVerityImageError("avb_hash_enable true")
       return VerifiedBootVersion2VerityImageBuilder(
           prop_dict["partition_name"],
           partition_size,
@@ -193,6 +195,7 @@ def CreateVerityImageBuilder(prop_dict):
           prop_dict["avb_add_hash_footer_args"])
 
     # Image uses hashtree footer.
+    raise BuildVerityImageError("hashtree footer")
     return VerifiedBootVersion2VerityImageBuilder(
         prop_dict["partition_name"],
         partition_size,
@@ -203,6 +206,7 @@ def CreateVerityImageBuilder(prop_dict):
         prop_dict.get("avb_salt"),
         prop_dict["avb_add_hashtree_footer_args"])
 
+  raise BuildVerityImageError("NONE")
   return None
 
 
