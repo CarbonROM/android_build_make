@@ -457,6 +457,8 @@ def BuildImage(in_dir, prop_dict, out_file, target_out=None):
       if spare_inodes < min_spare_inodes:
         spare_inodes = min_spare_inodes
       inodes += spare_inodes
+      if "extfs_inode_reserved" in prop_dict:
+        inodes += int(prop_dict["extfs_inode_reserved"])
       prop_dict["extfs_inode_count"] = str(inodes)
       prop_dict["partition_size"] = str(size)
       logger.info(
@@ -561,6 +563,7 @@ def ImagePropFromGlobalDict(glob_dict, mount_point):
     copy_prop("system_squashfs_disable_4k_align", "squashfs_disable_4k_align")
     copy_prop("system_base_fs_file", "base_fs_file")
     copy_prop("system_extfs_inode_count", "extfs_inode_count")
+    copy_prop("system_extfs_inode_reserved", "extfs_inode_reserved")
     if not copy_prop("system_extfs_rsv_pct", "extfs_rsv_pct"):
       d["extfs_rsv_pct"] = "0"
     copy_prop("system_reserved_size", "partition_reserved_size")
@@ -584,6 +587,7 @@ def ImagePropFromGlobalDict(glob_dict, mount_point):
     copy_prop("system_squashfs_block_size", "squashfs_block_size")
     copy_prop("system_base_fs_file", "base_fs_file")
     copy_prop("system_extfs_inode_count", "extfs_inode_count")
+    copy_prop("system_extfs_inode_reserved", "extfs_inode_reserved")
     if not copy_prop("system_extfs_rsv_pct", "extfs_rsv_pct"):
       d["extfs_rsv_pct"] = "0"
     copy_prop("system_reserved_size", "partition_reserved_size")
@@ -615,6 +619,7 @@ def ImagePropFromGlobalDict(glob_dict, mount_point):
     copy_prop("vendor_squashfs_disable_4k_align", "squashfs_disable_4k_align")
     copy_prop("vendor_base_fs_file", "base_fs_file")
     copy_prop("vendor_extfs_inode_count", "extfs_inode_count")
+    copy_prop("vendor_extfs_inode_reserved", "extfs_inode_reserved")
     if not copy_prop("vendor_extfs_rsv_pct", "extfs_rsv_pct"):
       d["extfs_rsv_pct"] = "0"
     copy_prop("vendor_reserved_size", "partition_reserved_size")
@@ -636,6 +641,7 @@ def ImagePropFromGlobalDict(glob_dict, mount_point):
     copy_prop("product_squashfs_disable_4k_align", "squashfs_disable_4k_align")
     copy_prop("product_base_fs_file", "base_fs_file")
     copy_prop("product_extfs_inode_count", "extfs_inode_count")
+    copy_prop("product_extfs_inode_reserved", "extfs_inode_reserved")
     if not copy_prop("product_extfs_rsv_pct", "extfs_rsv_pct"):
       d["extfs_rsv_pct"] = "0"
     copy_prop("product_reserved_size", "partition_reserved_size")
@@ -659,6 +665,7 @@ def ImagePropFromGlobalDict(glob_dict, mount_point):
               "squashfs_disable_4k_align")
     copy_prop("product_services_base_fs_file", "base_fs_file")
     copy_prop("product_services_extfs_inode_count", "extfs_inode_count")
+    copy_prop("product_services_extfs_inode_reserved", "extfs_inode_reserved")
     if not copy_prop("product_services_extfs_rsv_pct", "extfs_rsv_pct"):
       d["extfs_rsv_pct"] = "0"
     copy_prop("product_services_reserved_size", "partition_reserved_size")
@@ -680,6 +687,7 @@ def ImagePropFromGlobalDict(glob_dict, mount_point):
     copy_prop("odm_squashfs_disable_4k_align", "squashfs_disable_4k_align")
     copy_prop("odm_base_fs_file", "base_fs_file")
     copy_prop("odm_extfs_inode_count", "extfs_inode_count")
+    copy_prop("odm_extfs_inode_reserved", "extfs_inode_reserved")
     if not copy_prop("odm_extfs_rsv_pct", "extfs_rsv_pct"):
       d["extfs_rsv_pct"] = "0"
     copy_prop("odm_reserved_size", "partition_reserved_size")
@@ -689,6 +697,7 @@ def ImagePropFromGlobalDict(glob_dict, mount_point):
     if not copy_prop("oem_journal_size", "journal_size"):
       d["journal_size"] = "0"
     copy_prop("oem_extfs_inode_count", "extfs_inode_count")
+    copy_prop("oem_extfs_inode_reserved", "extfs_inode_reserved")
     copy_prop("ext4_share_dup_blocks", "ext4_share_dup_blocks")
     if not copy_prop("oem_extfs_rsv_pct", "extfs_rsv_pct"):
       d["extfs_rsv_pct"] = "0"
