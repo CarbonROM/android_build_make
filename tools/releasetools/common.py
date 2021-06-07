@@ -1157,7 +1157,7 @@ def BuildVBMeta(image_path, partitions, name, needed_partitions):
     assert OPTIONS.aftl_signer_helper is not None, 'No AFTL signer helper provided.'
     # AFTL inclusion proof generation code will go here.
 
-def _MakeRamdisk(sourcedir, fs_config_file=None, lz4_ramdisks=False, xz_ramdisks=False):
+def _MakeRamdisk(sourcedir, fs_config_file=None, lz4_ramdisks=False, xz_ramdisks=False, lzma_ramdisks=False):
   ramdisk_img = tempfile.NamedTemporaryFile()
 
   if fs_config_file is not None and os.access(fs_config_file, os.F_OK):
@@ -1171,6 +1171,9 @@ def _MakeRamdisk(sourcedir, fs_config_file=None, lz4_ramdisks=False, xz_ramdisks
              stdout=ramdisk_img.file.fileno())
   elif xz_ramdisks:
     p2 = Run(["xz", "-f", "-c", "--check=crc32", "--lzma2=dict=32MiB"], stdin=p1.stdout,
+             stdout=ramdisk_img.file.fileno())
+  elif lzma_ramdisks:
+    p2 = Run(["xz", "-f", "-c", "--check=crc32", "--format=lzma"], stdin=p1.stdout,
              stdout=ramdisk_img.file.fileno())
   else:
     p2 = Run(["minigzip"], stdin=p1.stdout, stdout=ramdisk_img.file.fileno())
@@ -1218,7 +1221,8 @@ def _BuildBootableImage(image_name, sourcedir, fs_config_file, info_dict=None,
   if has_ramdisk:
     use_lz4 = info_dict.get("lz4_ramdisks") == 'true'
     use_xz = info_dict.get("xz_ramdisks") == 'true'
-    ramdisk_img = _MakeRamdisk(sourcedir, fs_config_file, lz4_ramdisks=use_lz4, xz_ramdisks=use_xz)
+    use_lzma = info_dict.get("lzma_ramdisks") == 'true'
+    ramdisk_img = _MakeRamdisk(sourcedir, fs_config_file, lz4_ramdisks=use_lz4, xz_ramdisks=use_xz, lzma_ramdisks=use_lzma)
 
   # use MKBOOTIMG from environ, or "mkbootimg" if empty or not set
   mkbootimg = os.getenv('MKBOOTIMG') or "mkbootimg"
@@ -1424,7 +1428,8 @@ def _BuildVendorBootImage(sourcedir, info_dict=None):
 
   use_lz4 = info_dict.get("lz4_ramdisks") == 'true'
   use_xz = info_dict.get("xz_ramdisks") == 'true'
-  ramdisk_img = _MakeRamdisk(sourcedir, lz4_ramdisks=use_lz4, xz_ramdisks=use_xz)
+  use_lzma = info_dict.get("lzma_ramdisks") == 'true'
+  ramdisk_img = _MakeRamdisk(sourcedir, lz4_ramdisks=use_lz4, xz_ramdisks=use_xz, lzma_ramdisks=use_lzma)
 
   # use MKBOOTIMG from environ, or "mkbootimg" if empty or not set
   mkbootimg = os.getenv('MKBOOTIMG') or "mkbootimg"
