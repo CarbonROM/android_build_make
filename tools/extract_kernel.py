@@ -30,9 +30,9 @@ COMPRESSION_ALGO = (
     (["xz", "-d"], b'\3757zXZ\000'),
     (["bzip2", "-d"], b'BZh'),
     (["lz4", "-d", "-l"], b'\002\041\114\030'),
+    (["unlzma"], b'\135\0\0\0'),
 
     # These are not supported in the build system yet.
-    # (["unlzma"], b'\135\0\0\0'),
     # (["lzop", "-d"], b'\211\114\132'),
 )
 
