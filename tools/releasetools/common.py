@@ -716,6 +716,7 @@ class RamdiskFormat(object):
   LZ4 = 1
   GZ = 2
   XZ = 3
+  LZMA = 4
 
 
 def _GetRamdiskFormat(info_dict):
@@ -723,6 +724,8 @@ def _GetRamdiskFormat(info_dict):
     ramdisk_format = RamdiskFormat.LZ4
   elif info_dict.get("xz_ramdisks") == 'true':
     ramdisk_format = RamdiskFormat.XZ
+  elif info_dict.get("lzma_ramdisks") == 'true':
+    ramdisk_format = RamdiskFormat.LZMA
   else:
     ramdisk_format = RamdiskFormat.GZ
   return ramdisk_format
@@ -1542,10 +1545,13 @@ def _MakeRamdisk(sourcedir, fs_config_file=None,
   elif ramdisk_format == RamdiskFormat.XZ:
     p2 = Run(["xz", "-f", "-c", "--check=crc32", "--lzma2=dict=32MiB"], stdin=p1.stdout,
              stdout=ramdisk_img.file.fileno())
+  elif ramdisk_format == RamdiskFormat.LZMA:
+    p2 = Run(["xz", "-f", "-c", "--check=crc32", "--format=lzma"], stdin=p1.stdout,
+             stdout=ramdisk_img.file.fileno())
   elif ramdisk_format == RamdiskFormat.GZ:
     p2 = Run(["minigzip"], stdin=p1.stdout, stdout=ramdisk_img.file.fileno())
   else:
-    raise ValueError("Only support lz4, xz or minigzip ramdisk format.")
+    raise ValueError("Only support lz4, xz, lzma or minigzip ramdisk format.")
 
   p2.wait()
   p1.wait()
