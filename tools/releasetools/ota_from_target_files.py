@@ -139,20 +139,12 @@ Non-A/B OTA specific options
       Verify the checksums of the updated system and vendor (if any) partitions.
       Non-A/B incremental OTAs only.
 
-  --backup <boolean>
-      Enable or disable the execution of backuptool.sh.
-      Disabled by default.
-
   --brotli <boolean>
      Enable (default) or disable usage of brotli
 
   --override_boot_partition <string>
       Override the partition where the boot image is installed.
       Used for devices with a staging partition (Asus Transformer).
-
-  --mount_by_label <boolean>
-      Force the OTA package to mount and format System by label
-      Can be enabled by defining TARGET_SETS_FSTAB. Defaults to false.
 
   -2  (--two_step)
       Generate a 'two-step' OTA package, where recovery is updated first, so
@@ -2159,14 +2151,10 @@ def main(argv):
       else:
         raise ValueError("Cannot parse value %r for option %r - only "
                          "integers are allowed." % (a, o))
-    elif o in ("--backup"):
-      OPTIONS.backuptool = bool(a.lower() == 'true')
     elif o in ("--brotli"):
       OPTIONS.brotli = bool(a.lower() == 'true')
     elif o in ("--override_boot_partition"):
       OPTIONS.override_boot_partition = a
-    elif o in ("--mount_by_label"):
-      OPTIONS.mount_by_label = bool(a.lower() == 'true')
     elif o in ("-2", "--two_step"):
       OPTIONS.two_step = True
     elif o == "--include_secondary":
@@ -2230,12 +2218,10 @@ def main(argv):
                                  "override_timestamp",
                                  "extra_script=",
                                  "worker_threads=",
-                                 "backup=",
                                  "brotli=",
                                  "override_boot_partition=",
                                  "two_step",
                                  "include_secondary",
-                                 "mount_by_label=",
                                  "no_signing",
                                  "block",
                                  "binary=",
