@@ -2286,7 +2286,7 @@ def main(argv):
   OPTIONS.oem_dicts = _LoadOemDicts(OPTIONS.oem_source)
 
   if "ota_mount_by_label" in OPTIONS.info_dict:
-    OPTIONS.override_device = bool(OPTIONS.info_dict.get("ota_mount_by_label").lower() == 'true')
+    OPTIONS.mount_by_label = bool(OPTIONS.info_dict.get("ota_mount_by_label").lower() == 'true')
 
   if "ota_backuptool" in OPTIONS.info_dict:
     OPTIONS.backuptool = bool(OPTIONS.info_dict.get("ota_backuptool").lower() == 'true')
