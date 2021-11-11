@@ -166,7 +166,7 @@ def GetVintfFileList():
   """
   def PathToPatterns(path):
     if path[-1] == '/':
-      path += '*'
+      path += '**'
     for device_path, target_files_rel_paths in DIR_SEARCH_PATHS.items():
       if path.startswith(device_path):
         suffix = path[len(device_path):]
