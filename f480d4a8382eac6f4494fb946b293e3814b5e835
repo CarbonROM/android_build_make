@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e8eeb69c_b6059800",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 341
+      },
+      "writtenOn": "2021-11-14T21:07:33Z",
+      "side": 1,
+      "message": "Pulled into my tree on Ubuntu 20.04, works as expected.",
+      "revId": "f480d4a8382eac6f4494fb946b293e3814b5e835",
+      "serverId": "4c0b52a2-b090-4331-a190-b288d812d081"
+    }
+  ]
+}
