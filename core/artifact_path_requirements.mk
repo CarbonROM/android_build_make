@@ -52,7 +52,7 @@ $(foreach makefile,$(ARTIFACT_PATH_REQUIREMENT_PRODUCTS),\
       $(PRODUCT_ARTIFACT_PATH_REQUIREMENT_HINT)) \
     $(eval unused_allowed := $(if $(filter true strict,$(enforcement)),\
       $(foreach p,$(allowed_patterns),$(if $(filter $(p),$(extra_files)),,$(p))))) \
-    $(call maybe-print-list-and-error,$(unused_allowed),$(INTERNAL_PRODUCT) includes redundant artifact path requirement allowed list entries.) \
+    $(call maybe-print-list-and-warn,$(unused_allowed),$(INTERNAL_PRODUCT) includes redundant artifact path requirement allowed list entries.) \
   ) \
 )
 $(PRODUCT_OUT)/offending_artifacts.txt:
