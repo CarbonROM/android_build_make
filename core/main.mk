@@ -1289,6 +1289,17 @@ $(if $(strip $(1)), \
 )
 endef
 
+# Warns user if the given list is non-empty, and prints it entries (stripping PRODUCT_OUT).
+# $(1): list of files to print
+# $(2): heading to print on warn
+define maybe-print-list-and-warn
+$(if $(strip $(1)), \
+  $(warning $(2)) \
+  $(info Offending entries:) \
+  $(foreach e,$(sort $(1)),$(info    $(patsubst $(PRODUCT_OUT)/%,%,$(e)))) \
+)
+endef
+
 ifeq ($(HOST_OS),darwin)
   # Target builds are not supported on Mac
   product_target_FILES :=
