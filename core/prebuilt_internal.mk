@@ -31,6 +31,9 @@ else ifdef LOCAL_SRC_FILES_$(my_32_64_bit_suffix)
 else ifdef LOCAL_SRC_FILES
   my_prebuilt_src_file := $(call clean-path,$(LOCAL_PATH)/$(LOCAL_SRC_FILES))
   LOCAL_SRC_FILES :=
+else ifdef LOCAL_GENERATED_SRC_FILES
+  my_prebuilt_src_file := $(call clean-path,$(LOCAL_GENERATED_SRC_FILES))
+  LOCAL_GENERATED_SRC_FILES :=
 else ifdef LOCAL_REPLACE_PREBUILT_APK_INSTALLED
   # This is handled specially in app_prebuilt_internal.mk
 else
