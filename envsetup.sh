@@ -300,7 +300,10 @@ function setpaths()
     local ACLOUD_PATH="$T/prebuilts/asuite/acloud/$os_arch"
     local AIDEGEN_PATH="$T/prebuilts/asuite/aidegen/$os_arch"
     local ATEST_PATH="$T/prebuilts/asuite/atest/$os_arch"
-    export ANDROID_BUILD_PATHS=$ANDROID_BUILD_PATHS:$ACLOUD_PATH:$AIDEGEN_PATH:$ATEST_PATH:
+
+    local CARBON_PREBUILTS_PATH="$T/prebuilts/tools-carbon/$os_arch"
+
+    export ANDROID_BUILD_PATHS=$ANDROID_BUILD_PATHS:$CARBON_PREBUILTS_PATH:$ACLOUD_PATH:$AIDEGEN_PATH:$ATEST_PATH:
 
     export PATH=$ANDROID_BUILD_PATHS$PATH
 
